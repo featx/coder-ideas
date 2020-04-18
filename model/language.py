@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 
-from src.model import Update
+from model import Update
 
 
 class Language(Update):

@@ -1,15 +1,27 @@
-import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-config = yaml.load()
 
-engine = create_engine(
-        "mysql+pymysql://root:123456@127.0.0.1:3306/s9day120?charset=utf8mb4",
-        max_overflow=0,  # 超过连接池大小外最多创建的连接
-        pool_size=5,  # 连接池大小
-        pool_timeout=30,  # 池中没有线程最多等待的时间，否则报错
-        pool_recycle=-1  # 多久之后对线程池中的线程进行一次连接的回收（重置）
+def create_session_factory(data_source_param):
+    engine = create_engine(
+        "mysql+pymysql://{username}:{password}@{host}:{port}/{database}?charset=utf8mb4".format_map(data_source_param),
+        max_overflow=0,
+        pool_size=5,
+        pool_timeout=30,
+        pool_recycle=-1
     )
-SessionFactory = sessionmaker(bind=engine)
-session = scoped_session(SessionFactory)
+    return sessionmaker(bind=engine)
+
+
+def create_transaction(session_factory: sessionmaker):
+    def transactional(service_func):
+        def wrapper(*service_func_args):
+            session = scoped_session(session_factory)
+            try:
+                service_func(*service_func_args)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+            session.remove()
+        return wrapper
+    return transactional

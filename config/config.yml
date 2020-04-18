@@ -1,0 +1,7 @@
+data_source:
+  mysql:
+    host: 127.0.0.1
+    port: 3308
+    database: coder
+    username: coder
+    password: coder
