@@ -1,6 +1,6 @@
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from model.project import Project
+from service.model.project import Project
 
 
 class ProjectService:
@@ -12,3 +12,4 @@ class ProjectService:
         session = scoped_session(self.__session_maker)
         session.add(project)
         session.commit()
+        return project

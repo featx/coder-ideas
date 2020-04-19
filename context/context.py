@@ -5,6 +5,7 @@ from aiohttp import web
 
 from context.data_source import create_session_factory
 from handler.project import ProjectHandler
+from manage.project import ProjectManager
 from service.project import ProjectService
 
 
@@ -12,6 +13,7 @@ class CoderContext:
     config: None
     session_factory = None
     handlers = []
+    managers = {}
     services = {}
     repositories = []
 
@@ -30,6 +32,7 @@ class CoderApplication:
             create_session_factory(self.context.config["data_source"]["mysql"])
 
         self.services()
+        self.managers()
         self.handlers()
         self.__http_server = web.Application()
         for handler in self.context.handlers:
@@ -44,5 +47,9 @@ class CoderApplication:
     def services(self):
         self.context.services["project"] = ProjectService(self.context.session_factory)
 
+    def managers(self):
+        git_workspace = self.context.config["version_control"]["git"]["work_path"]
+        self.context.managers["project"] = ProjectManager(self.context.services, git_workspace)
+
     def handlers(self):
-        self.context.handlers.append(ProjectHandler(self.context.services))
+        self.context.handlers.append(ProjectHandler(self.context.managers))

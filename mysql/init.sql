@@ -58,8 +58,10 @@ create table if not exists `t_coder_project`
     `language_code`      varchar(16)      not null default '' comment '所用开发语言编码',
     `framework_code`     varchar(16)      not null default '' comment '所用框架参照编码',
     `template_repo_url`  varchar(128)     not null default '' comment '模板开发VCS库地址',
+    `template_commit`    varchar(64)      not null default '' comment '模板所拉取的commit',
     `template_api_token` varchar(128)     not null default '' comment '模板项目库地址的api_token',
     `repo_url`           varchar(128)     not null default '' comment '当前项目自己的VCS库地址',
+    `branch`             varchar(128)     not null default '' comment '所要更改推送的分支',
     `api_token`          varchar(128)     not null default '' comment '访问自己项目库地址的api_token',
     `comment`            varchar(255)     not null default '' comment '备注，说明等',
     `deleted`            tinyint unsigned not null default 0 comment '软删除标示:0否1是',
@@ -72,10 +74,12 @@ create unique index `unq_project_code` on `t_coder_project` (`code`);
 create index `idx_project_image_url` on `t_coder_project` (`image_url`);
 create index `idx_project_language_code` on `t_coder_project` (`language_code`);
 create index `idx_project_framework_code` on `t_coder_project` (`framework_code`);
-create index `idx_project_template_repo_url` on `t_coder_project` (`template_repo_url`);
-create index `idx_project_template_api_token` on `t_coder_project` (`template_api_token`);
-create index `idx_project_repo_url` on `t_coder_project` (`repo_url`);
-create index `idx_project_api_token` on `t_coder_project` (`api_token`);
+create index `idx_project_template_repo_url` on `t_coder_project` (`template_repo_url`(20));
+create index `idx_project_template_commit` on `t_coder_project` (`template_commit`(20));
+create index `idx_project_template_api_token` on `t_coder_project` (`template_api_token`(20));
+create index `idx_project_repo_url` on `t_coder_project` (`repo_url`(20));
+create index `idx_project_branch` on `t_coder_project` (`branch`(20));
+create index `idx_project_api_token` on `t_coder_project` (`api_token`(20));
 
 create table if not exists `t_coder_project_domain`
 (

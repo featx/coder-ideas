@@ -5,3 +5,6 @@ data_source:
     database: coder
     username: coder
     password: coder
+version_control:
+  git:
+    work_path: C:\Users\Excepts\Documents\workspace
