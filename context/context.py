@@ -2,6 +2,7 @@ import os
 
 import yaml
 from aiohttp import web
+from sqlalchemy.orm import sessionmaker
 
 from context.data_source import create_session_factory
 from handler.project import ProjectHandler
@@ -28,10 +29,8 @@ class CoderApplication:
 
     def __init__(self):
         self.context = CoderContext()
-        self.context.session_factory = \
-            create_session_factory(self.context.config["data_source"]["mysql"])
-
-        self.services()
+        session_maker = create_session_factory(self.context.config["data_source"]["mysql"])
+        self.services(session_maker)
         self.managers()
         self.handlers()
         self.__http_server = web.Application()
@@ -44,8 +43,8 @@ class CoderApplication:
     def start(self):
         web.run_app(self.__http_server)
 
-    def services(self):
-        self.context.services["project"] = ProjectService(self.context.session_factory)
+    def services(self, session_maker: sessionmaker):
+        self.context.services["project"] = ProjectService(session_maker)
 
     def managers(self):
         git_workspace = self.context.config["version_control"]["git"]["work_path"]

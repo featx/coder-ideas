@@ -9,9 +9,9 @@ class ModelFromDict:
 
 
 def json_exception(handler):
-    async def actual_handle(*args):
+    async def actual_handle(self, *args):
         try:
-            result = await handler(*args)
+            result = await handler(self, *args)
             return web.json_response({"code": 0, "result": result})
         except Exception as e:
             import traceback
