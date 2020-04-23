@@ -1,3 +1,4 @@
+import os
 from threading import Lock
 
 
@@ -25,3 +26,12 @@ class IdGenerate:
 
 def base_n(num, n):
     return ((num == 0) and "0") or (base_n(num // n, n).lstrip("0") + "0123456789abcdefghijklmnopqrstuvwxyz"[num % n])
+
+
+def delete_dir(path):
+    for p, dirs, files in os.walk(path):
+        for file in files:
+            os.remove(os.path.join(p, file))
+        for directory in dirs:
+            delete_dir(os.path.join(p, directory))
+    os.rmdir(path)

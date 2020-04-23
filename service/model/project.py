@@ -11,6 +11,7 @@ class Project(declarative_base(), Unified):
     language_code = Column(String(), default="", nullable=False)
     framework_code = Column(String(), default="", nullable=False)
     template_repo_url = Column(String(), default="", nullable=False)
+    template_branch = Column(String(), default="", nullable=False)
     template_commit = Column(String(), default="", nullable=False)
     template_api_token = Column(String(), default="", nullable=False)
     repo_url = Column(String(), default="", nullable=False)

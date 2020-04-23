@@ -1,4 +1,6 @@
+import datetime
 import os
+import time
 
 import pytest
 from git import Repo
@@ -8,6 +10,7 @@ from git import Repo
 class TestGit:
     @pytest.mark.asserttest
     def test_git_remote(self):
+        a = datetime.datetime.fromtimestamp(time.time(), tz=datetime.tzinfo)
         repo = Repo(os.path.abspath('.'))
         result = repo.git.execute("git ls-remote {}".format("https://github.com/featx/docker-tree.git"))
         print(result)
