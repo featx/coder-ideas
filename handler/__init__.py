@@ -1,7 +1,10 @@
 from aiohttp import web
 
+from context.exception import BusinessException
+
 
 class ModelFromDict:
+    code = ""
     comment = ""
 
     def __init__(self, dict):
@@ -13,8 +16,8 @@ def json_exception(handler):
         try:
             result = await handler(self, *args)
             return web.json_response({"code": 0, "result": result})
-        except Exception as e:
+        except BusinessException as e:
             import traceback
             traceback.print_exc()
-            return web.json_response({"code": -1, "result": {"message": "", "tips": ""}})
+            return web.json_response({"code": e.code, "result": {"message": e.message, "extra": e.extra}})
     return actual_handle

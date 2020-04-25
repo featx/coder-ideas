@@ -20,14 +20,17 @@ class ProjectHandler:
         project = self.__project_manager.create(ModelFromDict(body))
         return {"id": project.id, "code": project.code}
 
-    async def update(self, request):
+    async def update(self, request: Request):
         return web.json_response({"code": -1, "result": "not implemented"})
 
-    async def delete(self, request):
+    async def delete(self, request: Request):
         return web.json_response({"code": -1, "result": "not implemented"})
 
-    async def get(self, request):
+    async def get(self, request: Request):
         return web.json_response({"code": -1, "result": "not implemented"})
 
-    async def page(self, request):
+    async def detail(self, request: Request):
+        pass
+
+    async def page(self, request: Request):
         return web.json_response({"code": -1, "result": "not implemented"})

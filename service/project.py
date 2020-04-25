@@ -21,3 +21,7 @@ class ProjectService:
             project.code = "PJT{}".format(self.__id_generator.next_base_36())
         session.add(project)
         return project
+
+    def find_by_code(self, project_code: str):
+        session = self._scoped_session()
+        return session.query(Project).filter_by(code=project_code).first()

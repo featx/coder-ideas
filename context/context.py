@@ -5,9 +5,20 @@ from aiohttp import web
 from sqlalchemy.orm import sessionmaker
 
 from context.data_source import create_session_factory
+from handler.data_engine import DataEngineHandler
+from handler.domain import DomainHandler
 from handler.project import ProjectHandler
+from handler.template import TemplateHandler
+from manage.data_engine import DataEngineManager
+from manage.domain import DomainManager
 from manage.project import ProjectManager
+from manage.template import TemplateManager
+from service.data_engine import DataEngineService
+from service.domain_property import DomainPropertyService
 from service.project import ProjectService
+from service.project_data_engine import ProjectDataEngineService
+from service.project_domain import ProjectDomainService
+from service.project_template import ProjectTemplateService
 
 
 class CoderContext:
@@ -44,11 +55,23 @@ class CoderApplication:
         web.run_app(self.__http_server)
 
     def services(self, session_maker: sessionmaker):
+        self.context.services["data-engine"] = DataEngineService(session_maker)
+
         self.context.services["project"] = ProjectService(session_maker)
+        self.context.services["project-template"] = ProjectTemplateService(session_maker)
+        self.context.services["project-domain"] = ProjectDomainService(session_maker)
+        self.context.services["domain-property"] = DomainPropertyService(session_maker)
+        self.context.services["project-data-engine"] = ProjectDataEngineService(session_maker)
 
     def managers(self):
         git_workspace = self.context.config["version_control"]["git"]["work_path"]
         self.context.managers["project"] = ProjectManager(self.context.services, git_workspace)
+        self.context.managers["template"] = TemplateManager(self.context.services)
+        self.context.managers["domain"] = DomainManager(self.context.services)
+        self.context.managers["data-engine"] = DataEngineManager(self.context.services)
 
     def handlers(self):
         self.context.handlers.append(ProjectHandler(self.context.managers))
+        self.context.handlers.append(TemplateHandler(self.context.managers))
+        self.context.handlers.append(DomainHandler(self.context.managers))
+        self.context.handlers.append(DataEngineHandler(self.context.managers))

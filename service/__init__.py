@@ -1,3 +1,6 @@
+from context.exception import BusinessError
+
+
 def transactional(func):
     def actual_func(self, *args):
         session = self._scoped_session()
@@ -7,5 +10,5 @@ def transactional(func):
             return result
         except Exception as e:
             session.rollback()
-            raise e
+            raise BusinessError.SYSTEM_ERROR.value.and_with(e.args)
     return actual_func

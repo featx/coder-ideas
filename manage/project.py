@@ -3,8 +3,10 @@ import os
 from git import Repo
 
 from plugin import delete_dir
+from service.project_domain import ProjectDomainService
 from service.model.project import Project
 from service.project import ProjectService
+from service.project_template import ProjectTemplateService
 
 
 def _repo_with_token_url(url, api_token):
@@ -30,6 +32,8 @@ def _repo_with_token_url(url, api_token):
 class ProjectManager:
     def __init__(self, services, workspace):
         self.__project_service: ProjectService = services["project"]
+        self.__template_service: ProjectTemplateService = services["project-template"]
+        self.__domain_service: ProjectDomainService = services["project-domain"]
         self.__git_workspace = workspace
 
     def create(self, creating_project):
@@ -42,24 +46,30 @@ class ProjectManager:
         repo.close()
         delete_dir(os.path.join(repo_dir, ".git"))
 
-        project = self.__project_service.create(self.__to_project(creating_project))
+        project = self.__project_service.create(_to_project(creating_project))
 
         project_dir = os.path.join(self.__git_workspace, project.code)
         os.rename(repo_dir, project_dir)
         Repo.init(project_dir).close()
         return project
 
-    def __to_project(self, creating_project):
-        return Project(
-            code=creating_project.code,
-            name=creating_project.name,
-            image_url=creating_project.image_url,
-            template_repo_url=creating_project.template_repo_url,
-            template_api_token=creating_project.template_api_token,
-            template_branch=creating_project.template_branch,
-            template_commit=creating_project.template_commit,
-            repo_url=creating_project.repo_url,
-            api_token=creating_project.api_token,
-            branch=creating_project.branch,
-            comment=creating_project.comment
-        )
+    def detail(self, project_code: str):
+        project = self.__project_service.find_by_code(project_code)
+        templates = self.__template_service.find_by_project_code(project_code)
+        domains = self.__domain_service.find_by_project_code(project_code)
+
+
+def _to_project(creating_project):
+    return Project(
+        code=creating_project.code,
+        name=creating_project.name,
+        image_url=creating_project.image_url,
+        template_repo_url=creating_project.template_repo_url,
+        template_api_token=creating_project.template_api_token,
+        template_branch=creating_project.template_branch,
+        template_commit=creating_project.template_commit,
+        repo_url=creating_project.repo_url,
+        api_token=creating_project.api_token,
+        branch=creating_project.branch,
+        comment=creating_project.comment
+    )

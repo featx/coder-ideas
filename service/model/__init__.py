@@ -20,6 +20,6 @@ class Update(Record):
 
 
 class Unified(Update):
-    code = Column(String(), default="", nullable=False)
+    code = Column(String(), unique=True, default="", nullable=False)
     name = Column(String(), default="", nullable=False)
     type = Column(Integer(), default=0, nullable=False)
