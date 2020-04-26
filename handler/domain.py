@@ -40,7 +40,12 @@ class DomainHandler:
     @json_exception
     async def create_for_project(self, request: Request):
         body = await request.json()
-        project = self.__domain_manager.create(ModelFromDict(body))
+        properties = []
+        for prop in body["properties"]:
+            properties.append(ModelFromDict(prop))
+        domain = ModelFromDict(body)
+        domain.properties = properties
+        project = self.__domain_manager.create(domain)
         return {"id": project.id, "code": project.code}
 
     async def update(self, request):

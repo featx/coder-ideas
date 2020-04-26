@@ -22,5 +22,13 @@ class ProjectDomainService:
         session = self._scoped_session()
         if project_domain.code is None or project_domain.code.strip() == "":
             project_domain.code = "PDM{}".format(self.__id_generator.next_base_36())
+        last_domain = session.query(ProjectDomain) \
+            .filter_by(project_code=project_domain.project_code) \
+            .order_by(ProjectDomain.sort.desc()) \
+            .first()
+        if last_domain is None:
+            project_domain.sort = 1
+        else:
+            project_domain.sort = last_domain.sort + 1
         session.add(project_domain)
         return project_domain

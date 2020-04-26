@@ -19,9 +19,19 @@ class DomainPropertyService:
             .filter_by(project_code=project_code).all()
 
     @transactional
-    def create(self, domain_property: DomainProperty):
+    def create(self, domain_properties: tuple):
         session = self._scoped_session()
-        if domain_property.code is None or domain_property.code.strip() == "":
-            domain_property.code = "DMP{}".format(self.__id_generator.next_base_36())
-        session.add(domain_property)
-        return domain_property
+        last_property = session.query(DomainProperty) \
+            .filter_by(domain_code=domain_properties[0].domain_code) \
+            .order_by(DomainProperty.sort.desc()) \
+            .first()
+        start = 1
+        if last_property is not None:
+            start = last_property.sort + 1
+        for domain_property in domain_properties:
+            if domain_property.code is None or domain_property.code.strip() == "":
+                domain_property.code = "DMP{}".format(self.__id_generator.next_base_36())
+            domain_property.sort = start
+            session.add(domain_property)
+            start = start + 1
+        return domain_properties

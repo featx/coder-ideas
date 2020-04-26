@@ -14,11 +14,18 @@ class DataEngineManager:
     def create(self, data_engine):
         pass
 
-    def create_project_data_engine(self, data_engine):
-        project = self.__project_service.find_by_code(data_engine.project_code)
+    def create_project_data_engine(self, creating_data_engine):
+        if creating_data_engine.project_code is None or creating_data_engine.project_code.strip() == "":
+            raise BusinessError.PARAMETER_LOST.value.and_with("project code")
+        if creating_data_engine.data_engine_code is None or creating_data_engine.data_engine_code.strip() == "":
+            raise BusinessError.PARAMETER_LOST.value.and_with("data engine code")
+        project = self.__project_service.find_by_code(creating_data_engine.project_code)
         if project is None:
-            raise BusinessError.PROJECT_NOT_FOUND.value.and_with(data_engine.project_code)
-        project_data_engine = self.__project_data_engine_service.create(_to_project_data_engine(data_engine))
+            raise BusinessError.PROJECT_NOT_FOUND.value.and_with(creating_data_engine.project_code)
+        data_engine = self.__data_engine_service.find_by_code(creating_data_engine.data_engine_code)
+        if data_engine is None:
+            raise BusinessError.DATA_ENGINE_NOT_FOUND.value.and_with(creating_data_engine.data_engine_code)
+        project_data_engine = self.__project_data_engine_service.create(_to_project_data_engine(creating_data_engine))
         return project_data_engine
 
 

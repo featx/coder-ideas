@@ -22,5 +22,13 @@ class ProjectTemplateService:
         session = self._scoped_session()
         if project_template.code is None or project_template.code.strip() == "":
             project_template.code = "PTL{}".format(self.__id_generator.next_base_36())
+        last_template = session.query(ProjectTemplate) \
+            .filter_by(project_code=project_template.project_code) \
+            .order_by(ProjectTemplate.sort.desc()) \
+            .first()
+        if last_template is None:
+            project_template.sort = 1
+        else:
+            project_template.sort = last_template.sort + 1
         session.add(project_template)
         return project_template

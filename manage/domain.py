@@ -17,7 +17,12 @@ class DomainManager:
         if project is None:
             raise BusinessError.PROJECT_NOT_FOUND.value.and_with(creating_domain.project_code)
         domain = self.__domain_service.create(_to_project_domain(creating_domain))
-
+        domain_properties = []
+        for prop in creating_domain.properties:
+            prop.domain_code = domain.code
+            prop.project_code = creating_domain.project_code
+            domain_properties.append(_to_domain_property(prop))
+        self.__domain_property_service.create(domain_properties)
         return domain
 
 
@@ -32,5 +37,9 @@ def _to_project_domain(creating_domain):
 
 def _to_domain_property(domain_property):
     return DomainProperty(
-
+        code=domain_property.code,
+        name=domain_property.name,
+        domain_code=domain_property.domain_code,
+        project_code=domain_property.project_code,
+        comment=domain_property.comment
     )

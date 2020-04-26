@@ -22,6 +22,7 @@ class DataEngineService:
         session.add(data_engine)
         return data_engine
 
-    def find_by_code(self, project_code):
-        pass
+    def find_by_code(self, code):
+        session = self._scoped_session()
+        return session.query(DataEngine).filter_by(code=code).first()
 

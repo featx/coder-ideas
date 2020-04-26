@@ -34,6 +34,7 @@ class BusinessError(Enum):
 
     NOT_FOUND = BusinessException(code=4040000, message="Entity not found")
     PROJECT_NOT_FOUND = BusinessException(code=4041001, message="project not found")
+    DATA_ENGINE_NOT_FOUND = BusinessException(code=4041002, message="data engine not found")
 
     SYSTEM_ERROR = BusinessException(code=5000000, message="System error")
 
