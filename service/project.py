@@ -23,5 +23,16 @@ class ProjectService:
         return project
 
     def find_by_code(self, project_code: str):
+        if project_code is None or project_code.strip() == "":
+            return None
         session = self._scoped_session()
         return session.query(Project).filter_by(code=project_code).first()
+
+    @transactional
+    def delete(self, project_code):
+        session = self._scoped_session()
+        project = session.query(Project).filter_by(code=project_code).first()
+        if project is None:
+            raise Exception
+        project.deleted = True
+        return True

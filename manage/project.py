@@ -53,10 +53,36 @@ class ProjectManager:
         Repo.init(project_dir).close()
         return project
 
+    def update(self, param):
+        pass
+
+    def delete(self, project_code):
+        self.__project_service.delete(project_code)
+
+    def get(self, project_code):
+        project = self.__project_service.delete(project_code)
+        # Refactor project as provided properties
+        return project
+
     def detail(self, project_code: str):
         project = self.__project_service.find_by_code(project_code)
         templates = self.__template_service.find_by_project_code(project_code)
         domains = self.__domain_service.find_by_project_code(project_code)
+
+    def page(self, project_code):
+        pass
+
+    def generate(self, param):
+        domain = self.__domain_service.find_by_code(param.domain_code)
+        template = self.__template_service.find_by_code(param.template_code)
+        if domain is None and template is None:
+            project = self.__project_service.find_by_code(param.project_code)
+        elif domain is None:
+            project = self.__project_service.find_by_code(template.project_code)
+        else:
+            project = self.__project_service.find_by_code(domain.project_code)
+        project_dir = os.path.join(self.__git_workspace, project.code)    
+        pass
 
 
 def _to_project(creating_project):

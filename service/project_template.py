@@ -32,3 +32,9 @@ class ProjectTemplateService:
             project_template.sort = last_template.sort + 1
         session.add(project_template)
         return project_template
+
+    def find_by_code(self, code: str):
+        if code is None or code.strip() == "":
+            return None
+        session = self._scoped_session()
+        return session.query(ProjectTemplate).filter_by(code=code).first()

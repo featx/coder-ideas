@@ -32,3 +32,9 @@ class ProjectDomainService:
             project_domain.sort = last_domain.sort + 1
         session.add(project_domain)
         return project_domain
+
+    def find_by_code(self, code: str):
+        if code is None or code.strip() == "":
+            return None
+        session = self._scoped_session()
+        return session.query(ProjectDomain).filter_by(code=code).first()

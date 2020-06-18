@@ -11,8 +11,13 @@ class ProjectHandler:
 
     def routes(self):
         return [web.post('/project', self.create),
+                web.put('/project', self.update),
                 web.delete('/project', self.delete),
-                web.get('/project', self.get)]
+                web.get('/project', self.get),
+                web.get('/project/detail', self.detail),
+                web.get('/project/page', self.page),
+                web.post('/project/generate', self.generate)
+                ]
 
     @json_exception
     async def create(self, request: Request):
@@ -20,17 +25,36 @@ class ProjectHandler:
         project = self.__project_manager.create(ModelFromDict(body))
         return {"id": project.id, "code": project.code}
 
+    @json_exception
     async def update(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
+        body = await request.json()
+        project = self.__project_manager.update(ModelFromDict(body))
+        return {"id": project.id, "code": project.code}
 
+    @json_exception
     async def delete(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
+        project_code = request.get("code")
+        self.__project_manager.delete(project_code)
+        return True
 
+    @json_exception
     async def get(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
+        project_code = request.get("code")
+        return self.__project_manager.get(project_code)
 
+    @json_exception
     async def detail(self, request: Request):
-        pass
+        project_code = request.get("code")
+        return self.__project_manager.detail(project_code)
 
+    @json_exception
     async def page(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
+        body = await request.json()
+        return self.__project_manager.page(ModelFromDict(body))
+
+    @json_exception
+    async def generate(self, request: Request):
+        body = await request.json()
+        self.__project_manager.generate(ModelFromDict(body))
+#TODO
+        return True
