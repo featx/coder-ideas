@@ -39,6 +39,7 @@ def _to_domain_property(domain_property):
     return DomainProperty(
         code=domain_property.code,
         name=domain_property.name,
+        type=domain_property.type,
         domain_code=domain_property.domain_code,
         project_code=domain_property.project_code,
         comment=domain_property.comment

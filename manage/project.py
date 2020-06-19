@@ -3,6 +3,7 @@ import os
 from git import Repo
 
 from plugin import delete_dir
+from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
 from service.model.project import Project
 from service.project import ProjectService
@@ -78,16 +79,23 @@ class ProjectManager:
             return
         project_dir = os.path.join(self.__git_workspace, project.code)
         for template in templates:
+            template.data["${language.code}"] = project.language_code
             template_path = os.path.join(project_dir, template.path)
-            template_dir, template_file = os.path.split(template_path)
-            for domain in domains:
-                data = _render_data(template.data, domain)
-                domain_file = _replace_data(template_file, data)
-                _copy_and_replace(template_path, os.path.join(template_dir, domain_file), data)
+            if os.path.isfile(template_path):
+                template_file = template_path
+                _render_domain_files(template, template_file, domains)
+            elif os.path.isdir(template_path):
+                for _file in os.listdir(template_path):
+                    template_file = os.path.join(template_path, _file)
+                    _render_domain_files(template, template_file, domains)
 
     def __find_project_domains_templates(self, param):
-        domain = self.__domain_service.find_by_code(param.domain_code)
-        template = self.__template_service.find_by_code(param.template_code)
+        domain = None
+        template = None
+        if hasattr(param, 'domain_code'):
+            domain = self.__domain_service.find_by_code(param.domain_code)
+        if hasattr(param, 'template_code'):
+            template = self.__template_service.find_by_code(param.template_code)
         domains = []
         templates = []
         if domain is None and template is None:
@@ -126,25 +134,54 @@ def _to_project(creating_project):
         comment=creating_project.comment
     )
 
+
 def _render_data(template: dict, domain):
     data = dict()
     for key, value in template.items():
         k = key.replace("${domain.name}", domain.name)
         v = value.replace("${domain.name}", domain.name)
         data[k] = v
+    if hasattr(domain, "properties"):
+        data["properties"] = domain.properties
     return data
+
 
 def _replace_data(origin: str, data: dict):
     result = origin
     for k, v in data.items():
+        if not isinstance(k, str) or not isinstance(v, str):
+            continue
         result = result.replace(k, v)
     return result
 
-def _copy_and_replace(src: str, dst: str, map: dict):
+
+def _render_domain_files(template, template_file: str, domains: tuple):
+    for domain in domains:
+        data = _render_data(template.data, domain)
+        domain_file = _replace_data(template_file, data)
+        _copy_and_replace(template_file, domain_file, data)
+
+
+def _copy_and_replace(src: str, dst: str, data: dict):
+    dst_dir, _ = os.path.split(dst)
+    os.makedirs(dst_dir, exist_ok=True)
     with open(src, "r", encoding="utf-8") as read:
         with open(dst, "w", encoding="utf-8") as write:
             for line in read:
-                write.write(_replace_data(line, map))
+                new_line = _replace_data(line, data)
+                new_line = _replace_if_prop_exist(new_line, data["${language.code}"], data["properties"])
+                write.write(new_line)
                 write.flush()
             write.close()
         read.close()
+
+
+def _replace_if_prop_exist(line: str, language_code: str, properties: list):
+    if "${property.type}" not in line or properties is None:
+        return line
+    result = ""
+    type_map = dict_type_by_lang_code(language_code)
+    for prop in properties:
+        result += "\n"
+        result += line.replace("${property.type}", type_map[prop.type]).replace("${property.name}", prop.name)
+    return result
