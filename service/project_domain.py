@@ -17,7 +17,8 @@ class ProjectDomainService:
     @transactional
     def find_by_project_code(self, project_code):
         session = self._scoped_session()
-        domains = session.query(ProjectDomain).filter_by(project_code=project_code).all()
+        domains = session.query(ProjectDomain).filter_by(project_code=project_code)\
+            .order_by(ProjectDomain.sort).all()
         properties = session.query(DomainProperty).filter_by(project_code=project_code)\
             .order_by(DomainProperty.sort).all()
         domain_map = dict()

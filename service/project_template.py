@@ -15,7 +15,8 @@ class ProjectTemplateService:
 
     def find_by_project_code(self, project_code):
         session = self._scoped_session()
-        return session.query(ProjectTemplate).filter_by(project_code=project_code).all()
+        return session.query(ProjectTemplate).filter_by(project_code=project_code)\
+            .order_by(ProjectTemplate.sort).all()
 
     @transactional
     def create(self, project_template: ProjectTemplate):

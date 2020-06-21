@@ -44,6 +44,9 @@ class ProjectManager:
         url = _repo_with_token_url(creating_project.template_repo_url, creating_project.template_api_token)
         repo = Repo.clone_from(url, repo_dir, branch=creating_project.template_branch)
         creating_project.template_commit = repo.head.commit.hexsha
+        files = []
+        for entry in repo.index.entries:
+            files.append(entry[0])
         repo.close()
         delete_dir(os.path.join(repo_dir, ".git"))
 
@@ -51,7 +54,12 @@ class ProjectManager:
 
         project_dir = os.path.join(self.__git_workspace, project.code)
         os.rename(repo_dir, project_dir)
-        Repo.init(project_dir).close()
+        git_repo = Repo.init(project_dir)
+        git_repo.index.add(files)
+        if project.repo_url is not None and project.repo_url.strip() != "":
+            git_repo.create_remote('origin', project.repo_url)
+            # git_repo.('HEAD', b=creating_project.branch)
+        git_repo.close()
         return project
 
     def update(self, param):
@@ -78,16 +86,25 @@ class ProjectManager:
         if project is None:
             return
         project_dir = os.path.join(self.__git_workspace, project.code)
+        
+        files_to_add = []
+        files_to_remove = []
         for template in templates:
             template.data["${language.code}"] = project.language_code
             template_path = os.path.join(project_dir, template.path)
             if os.path.isfile(template_path):
                 template_file = template_path
-                _render_domain_files(template, template_file, domains)
+                files_to_remove.append(template.path)
+                files_to_add += _render_domain_files(template, template_file, domains)
             elif os.path.isdir(template_path):
                 for _file in os.listdir(template_path):
                     template_file = os.path.join(template_path, _file)
-                    _render_domain_files(template, template_file, domains)
+                    files_to_remove.append(os.path.join(template.path, _file))
+                    files_to_add += _render_domain_files(template, template_file, domains)
+        if len(files_to_add) > 0:
+            repo = Repo(project_dir)
+            repo.index.add(files_to_add)
+            _git_repo_remove(files_to_remove, repo)
 
     def __find_project_domains_templates(self, param):
         domain = None
@@ -124,6 +141,7 @@ def _to_project(creating_project):
         code=creating_project.code,
         name=creating_project.name,
         image_url=creating_project.image_url,
+        language_code=creating_project.language_code,
         template_repo_url=creating_project.template_repo_url,
         template_api_token=creating_project.template_api_token,
         template_branch=creating_project.template_branch,
@@ -156,24 +174,37 @@ def _replace_data(origin: str, data: dict):
 
 
 def _render_domain_files(template, template_file: str, domains: tuple):
+    domain_files = []
     for domain in domains:
         data = _render_data(template.data, domain)
         domain_file = _replace_data(template_file, data)
         _copy_and_replace(template_file, domain_file, data)
+        domain_files.append(domain_file)
+    return domain_files
 
 
 def _copy_and_replace(src: str, dst: str, data: dict):
     dst_dir, _ = os.path.split(dst)
     os.makedirs(dst_dir, exist_ok=True)
-    with open(src, "r", encoding="utf-8") as read:
-        with open(dst, "w", encoding="utf-8") as write:
-            for line in read:
-                new_line = _replace_data(line, data)
-                new_line = _replace_if_prop_exist(new_line, data["${language.code}"], data["properties"])
-                write.write(new_line)
-                write.flush()
+    try:
+        read = open(src, "r", encoding="utf-8")
+        write = open(dst, "w", encoding="utf-8")
+        for line in read:
+            new_line = _replace_data(line, data)
+            if "properties" in data:
+                properties = data["properties"]
+            else:
+                properties = None
+            new_line = _replace_if_prop_exist(new_line, data["${language.code}"], properties)
+            write.write(new_line)
+            write.flush()
+    except Exception as e:
+        pass
+    finally:
+        if write is not None:
             write.close()
-        read.close()
+        if read is not None:
+            read.close()
 
 
 def _replace_if_prop_exist(line: str, language_code: str, properties: list):
@@ -182,6 +213,20 @@ def _replace_if_prop_exist(line: str, language_code: str, properties: list):
     result = ""
     type_map = dict_type_by_lang_code(language_code)
     for prop in properties:
-        result += "\n"
         result += line.replace("${property.type}", type_map[prop.type]).replace("${property.name}", prop.name)
+        result += "\n"
     return result
+
+
+def _git_repo_remove(files_to_remove: list, repo: Repo):
+    files_remove = files_to_remove.copy()
+    for remove_file in files_to_remove:
+        require_drop = False
+        for entry in repo.index.entries:
+            if entry[0] == remove_file:
+                require_drop = True
+                break
+        if not require_drop:
+            files_remove.remove(remove_file)
+    if len(files_remove) > 0:
+        repo.index.remove(files_remove)
