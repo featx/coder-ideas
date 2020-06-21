@@ -1,6 +1,7 @@
 import os
 
 from git import Repo
+from git import Actor
 
 from plugin import delete_dir
 from plugin.language_type import dict_type_by_lang_code
@@ -37,6 +38,16 @@ class ProjectManager:
         self.__domain_service: ProjectDomainService = services["project-domain"]
         self.__git_workspace = workspace
 
+    def __git_repo_update(self, project: Project, files: list):
+        repo_dir = os.path.join(self.__git_workspace, project.name)
+        project_dir = os.path.join(self.__git_workspace, project.code)
+        os.rename(repo_dir, project_dir)
+        git_repo = Repo.init(project_dir)
+        git_repo.index.add(files)
+        if project.repo_url is not None and project.repo_url.strip() != "":
+            git_repo.create_remote('origin', project.repo_url)
+        git_repo.close()
+
     def create(self, creating_project):
         repo_dir = os.path.join(self.__git_workspace, creating_project.name)
 
@@ -51,19 +62,14 @@ class ProjectManager:
         delete_dir(os.path.join(repo_dir, ".git"))
 
         project = self.__project_service.create(_to_project(creating_project))
-
-        project_dir = os.path.join(self.__git_workspace, project.code)
-        os.rename(repo_dir, project_dir)
-        git_repo = Repo.init(project_dir)
-        git_repo.index.add(files)
-        if project.repo_url is not None and project.repo_url.strip() != "":
-            git_repo.create_remote('origin', project.repo_url)
-            # git_repo.('HEAD', b=creating_project.branch)
-        git_repo.close()
+        self.__git_repo_update(project, files)
         return project
 
     def update(self, param):
-        pass
+        if param.project_code is None or param.project_code.strip() != "":
+            return
+        project = self.__project_service.find_by_code(param.project_code)
+        self.__git_repo_update(project, [])
 
     def delete(self, project_code):
         self.__project_service.delete(project_code)
@@ -135,6 +141,21 @@ class ProjectManager:
             templates.append(template)
         return project, domains, templates
 
+    def commit_push(self, param):
+        if param.project_code is None or param.project_code.strip() == "":
+            return 
+        project = self.__project_service.find_by_code(param.project_code)
+        project_dir = os.path.join(self.__git_workspace, project.code)
+        repo = Repo(project_dir)
+        
+        try:
+            repo.commit("HEAD")
+        except Exception:
+            # TODO While permission component change the hard code to variables
+            actor = Actor("之外", "excepts@featx.org")
+            repo.index.commit("Init", author=actor, committer=actor)
+
+        _git_repo_push(repo, project)
 
 def _to_project(creating_project):
     return Project(
@@ -230,3 +251,30 @@ def _git_repo_remove(files_to_remove: list, repo: Repo):
             files_remove.remove(remove_file)
     if len(files_remove) > 0:
         repo.index.remove(files_remove)
+
+
+def _git_repo_push(repo: Repo, project: Project):
+    # check current branch is the project configured branch 
+    if repo.active_branch.name != project.branch:
+        repo.head.reference = repo.create_head(project.branch)
+        assert not repo.head.is_detached
+        repo.head.reset(index=True, working_tree=True)
+    # check repo url is configured.  No remote to push
+    if project.repo_url is None or project.repo_url.strip() == "":
+        return
+    url = project.repo_url
+    # if api token configured, set it.
+    if project.api_token is not None and project.api_token.strip() != "":
+        url = url.replace("https://", "https://%s@" % (project.api_token))\
+                .replace("http://", "http://%s@" % (project.api_token))
+    # check if origin remote existed
+    if 'origin' not in repo.remotes:
+        repo.create_remote('origin', url)
+    else:
+        origin = repo.remotes.origin
+        origin.set_url(url)
+    # check remote branch existed    
+    if project.branch in repo.remotes['origin'].refs:
+        repo.remotes.origin.push()
+    else:
+        repo.git.push('--set-upstream', 'origin', project.branch)

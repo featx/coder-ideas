@@ -16,7 +16,8 @@ class ProjectHandler:
                 web.get('/project', self.get),
                 web.get('/project/detail', self.detail),
                 web.get('/project/page', self.page),
-                web.post('/project/generate', self.generate)
+                web.post('/project/generate', self.generate),
+                web.post('/project/commit', self.commit_push)
                 ]
 
     @json_exception
@@ -58,3 +59,8 @@ class ProjectHandler:
         self.__project_manager.generate(ModelFromDict(body))
 #TODO
         return True
+
+    @json_exception
+    async def commit_push(self, request: Request):
+        body = await request.json()
+        self.__project_manager.commit_push(ModelFromDict(body))
