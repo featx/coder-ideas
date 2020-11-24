@@ -51,7 +51,7 @@ class ProjectHandler:
     @json_exception
     async def page(self, request: Request):
         body = await request.json()
-        return self.__project_manager.page(ModelFromDict(body))
+        return self.__project_manager.page(body)
 
     @json_exception
     async def generate(self, request: Request):

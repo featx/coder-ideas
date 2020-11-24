@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Column, BigInteger, Boolean, DateTime, String, Integer
+from sqlalchemy.orm import Query
 
 
 class Identified:
@@ -23,3 +24,23 @@ class Unified(Update):
     code = Column(String(), unique=True, default="", nullable=False)
     name = Column(String(), default="", nullable=False)
     type = Column(Integer(), default=0, nullable=False)
+
+
+class Page:
+    page = 1
+    size = 10
+
+    def __init__(self, dict):
+        self.__dict__.update(dict)
+        if self.page <= 1:
+            self.page = 1
+        if self.size <= 0:
+            self.size = 10
+
+    def offset(self):
+        return (self.page - 1) * self.size
+
+    def as_page(self, query: Query):
+        if query is None:
+            return None
+        return query.offset(self.offset()).limit(self.size)

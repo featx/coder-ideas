@@ -1,10 +1,11 @@
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import func
 
 from plugin import IdGenerate
 from plugin.snowflake import SnowFlake
 
 from service import transactional
-from service.model.project import Project
+from service.model.project import Project, ProjectPageCriteria
 
 
 class ProjectService:
@@ -36,3 +37,13 @@ class ProjectService:
             raise Exception
         project.deleted = True
         return True
+
+    @transactional
+    def find_by_page_criteria(self, project_model: ProjectPageCriteria):
+        c = project_model
+        session = self._scoped_session()
+        query = c.query(session.query(func.count(Project.id)))
+        count = query.first()[0]
+        if count <= 0:
+            return count, []
+        return count, c.query(session.query(Project)).all()

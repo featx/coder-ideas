@@ -6,7 +6,7 @@ from git import Actor
 from plugin import delete_dir
 from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
-from service.model.project import Project
+from service.model.project import Project, ProjectPageCriteria
 from service.project import ProjectService
 from service.project_template import ProjectTemplateService
 
@@ -84,8 +84,17 @@ class ProjectManager:
         templates = self.__template_service.find_by_project_code(project_code)
         domains = self.__domain_service.find_by_project_code(project_code)
 
-    def page(self, project_code):
-        pass
+    def page(self, kv_map: dict):
+        count, result_list = self.__project_service.find_by_page_criteria(ProjectPageCriteria(kv_map))
+        result = []
+        for project in result_list:
+            result.append(_from_project(project))
+        return {
+            "total": count,
+            "size": len(result_list),
+            "page": kv_map["page"],
+            "data": result
+        }
 
     def generate(self, param):
         project, domains, templates = self.__find_project_domains_templates(param)
@@ -157,12 +166,14 @@ class ProjectManager:
 
         _git_repo_push(repo, project)
 
+
 def _to_project(creating_project):
     return Project(
         code=creating_project.code,
         name=creating_project.name,
         image_url=creating_project.image_url,
         language_code=creating_project.language_code,
+        framework_code=creating_project.framework_code,
         template_repo_url=creating_project.template_repo_url,
         template_api_token=creating_project.template_api_token,
         template_branch=creating_project.template_branch,
@@ -172,6 +183,16 @@ def _to_project(creating_project):
         branch=creating_project.branch,
         comment=creating_project.comment
     )
+
+
+def _from_project(project: Project):
+    return {
+        "code": project.code,
+        "name": project.name,
+        "repo_url": project.repo_url,
+        "branch": project.branch,
+        "comment": project.comment
+    }
 
 
 def _render_data(template: dict, domain):
