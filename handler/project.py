@@ -40,12 +40,12 @@ class ProjectHandler:
 
     @json_exception
     async def get(self, request: Request):
-        project_code = request.get("code")
+        project_code = request.query.get("code")
         return self.__project_manager.get(project_code)
 
     @json_exception
     async def detail(self, request: Request):
-        project_code = request.get("code")
+        project_code = request.query.get("code")
         return self.__project_manager.detail(project_code)
 
     @json_exception

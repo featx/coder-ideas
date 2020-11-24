@@ -3,6 +3,8 @@ import os
 from git import Repo
 from git import Actor
 
+from manage.domain import _from_project_domain
+from manage.template import _from_project_template
 from plugin import delete_dir
 from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
@@ -75,14 +77,21 @@ class ProjectManager:
         self.__project_service.delete(project_code)
 
     def get(self, project_code):
-        project = self.__project_service.delete(project_code)
-        # Refactor project as provided properties
-        return project
+        project = self.__project_service.find_by_code(project_code)
+        return _from_project(project)
 
     def detail(self, project_code: str):
         project = self.__project_service.find_by_code(project_code)
+        result = _from_project(project)
         templates = self.__template_service.find_by_project_code(project_code)
+        result["templates"] = []
+        for template in templates:
+            result["templates"].append(_from_project_template(template))
         domains = self.__domain_service.find_by_project_code(project_code)
+        result["domains"] = []
+        for domain in domains:
+            result["domains"].append(_from_project_domain(domain))
+        return result
 
     def page(self, kv_map: dict):
         count, result_list = self.__project_service.find_by_page_criteria(ProjectPageCriteria(kv_map))
@@ -187,8 +196,12 @@ def _to_project(creating_project):
 
 def _from_project(project: Project):
     return {
+        "id": project.id,
         "code": project.code,
         "name": project.name,
+        "type": project.type,
+        "status": project.status,
+        "image_url": project.image_url,
         "repo_url": project.repo_url,
         "branch": project.branch,
         "comment": project.comment

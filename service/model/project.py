@@ -32,12 +32,12 @@ class ProjectPageCriteria(Page):
         if query is None:
             return None
         query_result = None
-        if self.project_code is not None:
+        if self.code is not None:
             query_result = non_default(query_result, query)\
-                .filter(Project.code==self.project_code)
-        if self.project_name is not None:
+                .filter(Project.code==self.code)
+        if self.name is not None:
             query_result = non_default(query_result, query)\
-                .filter(Project.name==self.project_name)
+                .filter(Project.name==self.name)
         return non_default(query_result, query)
 
 

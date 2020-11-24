@@ -1,4 +1,5 @@
 from context.exception import BusinessError
+from manage.domain_property import _from_domain_property
 from service.domain_property import DomainPropertyService
 from service.model.domain_property import DomainProperty
 from service.project_domain import ProjectDomainService
@@ -33,6 +34,20 @@ def _to_project_domain(creating_domain):
         project_code=creating_domain.project_code,
         comment=creating_domain.comment
     )
+
+
+def _from_project_domain(project_domain):
+    properties = []
+    for prop in project_domain.properties:
+        properties.append(_from_domain_property(prop))
+    return {
+        "code": project_domain.code,
+        "name": project_domain.name,
+        "type": project_domain.type,
+        "project_code": project_domain.project_code,
+        "comment": project_domain.comment,
+        "properties": properties
+    }
 
 
 def _to_domain_property(domain_property):

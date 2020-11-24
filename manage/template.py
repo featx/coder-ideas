@@ -27,3 +27,15 @@ def _to_project_template(creating_template):
         data=creating_template.data,
         comment=creating_template.comment
     )
+
+
+def _from_project_template(project_template):
+    return {
+        "code": project_template.code,
+        "name": project_template.name,
+        "project_code": project_template.project_code,
+        "path": project_template.path,
+        "engine": project_template.engine,
+        "data": project_template.data,
+        "comment": project_template.comment
+    }
