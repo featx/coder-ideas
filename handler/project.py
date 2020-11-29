@@ -34,7 +34,7 @@ class ProjectHandler:
 
     @json_exception
     async def delete(self, request: Request):
-        project_code = request.get("code")
+        project_code = request.query.get("code")
         self.__project_manager.delete(project_code)
         return True
 

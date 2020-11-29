@@ -1,0 +1,17 @@
+POST http://172.20.243.132:8080/project
+Content-Type: application/json
+
+{
+  "name": "my-project",
+  "template_repo_url": "https://github.com/featx/spring-cloud-alibaba.git",
+  "template_branch": "master",
+  "template_api_token": "",
+  "image_url": "",
+  "language_code": "LAN100001",
+  "framework_code": "FRW100001",
+  "repo_url": "https://github.com/excepts/my-project.git",
+  "branch": "coder",
+  "api_token": ""
+}
+###:
+GET http://172.20.243.132:8080/project?code=PJTlikx9y982mo

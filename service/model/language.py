@@ -9,4 +9,5 @@ class Language(declarative_base(), Update):
     __tablename__ = "t_coder_language"
     code = Column(String(), default="", nullable=False)
     name = Column(String(), default="", nullable=False)
+    sort = Column(Integer(), default=0, nullable=False)
     comment = Column(String(), default="", nullable=False)

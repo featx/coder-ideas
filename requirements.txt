@@ -1,4 +1,4 @@
-aiohttp==3.7.2
+aiohttp==3.7.3
 cchardet==2.1.7
 cryptography==3.2.1
 PyMySQL==0.10.1

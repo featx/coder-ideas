@@ -4,39 +4,21 @@ from git import Repo
 from git import Actor
 
 from manage.domain import _from_project_domain
-from manage.template import _from_project_template
-from plugin import delete_dir
+# from manage.template import _from_project_template
+# from plugin import delete_dir
+from manage.entry import _from_template_entry
 from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
 from service.model.project import Project, ProjectPageCriteria
 from service.project import ProjectService
-from service.project_template import ProjectTemplateService
-
-
-def _repo_with_token_url(url, api_token):
-    if url is None:
-        return None
-
-    schema = "https"
-
-    if api_token is None:
-        api_token = ""
-    else:
-        api_token = "{}@".format(api_token)
-
-    path = url
-    if url.startswith("https"):
-        path = url[8:]
-    elif url.startswith("http"):
-        schema = "http"
-        path = url[7:]
-    return "{}://{}{}".format(schema, api_token, path)
+# from service.template_entry import ProjectTemplateService
+from service.template import TemplateService
 
 
 class ProjectManager:
-    def __init__(self, services, workspace):
+    def __init__(self, services, workspace: str):
         self.__project_service: ProjectService = services["project"]
-        self.__template_service: ProjectTemplateService = services["project-template"]
+        self.__template_service: TemplateService = services["template"]
         self.__domain_service: ProjectDomainService = services["project-domain"]
         self.__git_workspace = workspace
 
@@ -51,20 +33,13 @@ class ProjectManager:
         git_repo.close()
 
     def create(self, creating_project):
-        repo_dir = os.path.join(self.__git_workspace, creating_project.name)
-
-        # Clone from template project
-        url = _repo_with_token_url(creating_project.template_repo_url, creating_project.template_api_token)
-        repo = Repo.clone_from(url, repo_dir, branch=creating_project.template_branch)
-        creating_project.template_commit = repo.head.commit.hexsha
-        files = []
-        for entry in repo.index.entries:
-            files.append(entry[0])
-        repo.close()
-        delete_dir(os.path.join(repo_dir, ".git"))
+        # files = []
+        # for entry in repo.index.entries:
+        #     files.append(entry[0])
+        # delete_dir(os.path.join(repo_dir, ".git"))
 
         project = self.__project_service.create(_to_project(creating_project))
-        self.__git_repo_update(project, files)
+        # self.__git_repo_update(project, files)
         return project
 
     def update(self, param):
@@ -86,7 +61,7 @@ class ProjectManager:
         templates = self.__template_service.find_by_project_code(project_code)
         result["templates"] = []
         for template in templates:
-            result["templates"].append(_from_project_template(template))
+            result["templates"].append(_from_template_entry(template))
         domains = self.__domain_service.find_by_project_code(project_code)
         result["domains"] = []
         for domain in domains:
