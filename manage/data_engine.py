@@ -1,5 +1,6 @@
 from context.exception import BusinessError
 from service.data_engine import DataEngineService
+from service.model.data_engine import DataEngine
 from service.model.project_data_engine import ProjectDateEngine
 from service.project import ProjectService
 from service.project_data_engine import ProjectDataEngineService
@@ -28,6 +29,13 @@ class DataEngineManager:
         project_data_engine = self.__project_data_engine_service.create(_to_project_data_engine(creating_data_engine))
         return project_data_engine
 
+    def list_all(self):
+        result = []
+        data_engines = self.__data_engine_service.list_all()
+        for data_engine in data_engines:
+            result.append(_from_data_engine(data_engine))
+        return result
+
 
 def _to_project_data_engine(data_engine):
     return ProjectDateEngine(
@@ -36,3 +44,10 @@ def _to_project_data_engine(data_engine):
         project_code=data_engine.project_code,
         comment=data_engine.comment
     )
+
+def _from_data_engine(data_engine: DataEngine):
+    return {
+        "id": data_engine.id,
+        "code": data_engine.code,
+        "name": data_engine.name
+    }

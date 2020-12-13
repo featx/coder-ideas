@@ -7,11 +7,11 @@ from manage.language import LanguageManager
 
 class LanguageHandler:
     def __init__(self, managers):
-        self.__project_manager: LanguageManager = managers["language"]
+        self.__language_manager: LanguageManager = managers["language"]
 
     def routes(self):
         return [web.get('/languages', self.list_all)]
 
     @json_exception
     async def list_all(self, request: Request):
-        return self.__project_manager.list_all()
+        return self.__language_manager.list_all()
