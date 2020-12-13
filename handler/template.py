@@ -66,7 +66,11 @@ class CreatingTemplate(ModelFromDict):
     framework_code = ""
 
 class UpdatingTemplate(ModelFromDict):
-    code = ""
     repo_url = None
-    commit = ""
-    branch = ""
+    name = None
+    type = None
+    sort = None
+    language_code = None
+    framework_code = None
+    api_token = None
+    branch = None

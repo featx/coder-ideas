@@ -44,13 +44,16 @@ class TemplateManager:
         template = self.__template_service.find_by_code(updating_template.code)
         if template is None:
             raise Exception("Template not found")
+        branch = template.branch
+        print(updating_template.branch)
         if updating_template.branch is not None and updating_template.branch.strip() != "":
-            local_dir = self._repo_dir(template.repo_url)
-            repo = Repo.init(local_dir)
-            repo.git.checkout(updating_template.branch)
-            repo.git.pull()
-            updating_template.commit = repo.head.commit.hexsha
-            repo.close()
+            branch = updating_template.branch
+        local_dir = self._repo_dir(template.repo_url)
+        repo = Repo.init(local_dir)
+        repo.git.checkout(branch)
+        repo.git.pull()
+        updating_template.commit = repo.head.commit.hexsha
+        repo.close()
         return self.__template_service.update(_to_template(updating_template))
 
     def delete(self, code):
