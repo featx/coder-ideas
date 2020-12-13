@@ -102,7 +102,7 @@ create index `idx_template_branch` on `t_coder_template` (`branch`(20));
 create index `idx_template_commit` on `t_coder_template` (`commit`(20));
 create index `idx_template_api_token` on `t_coder_template` (`api_token`(20));
 
-create table if not exists `t_coder_template_entry`
+create table if not exists `t_coder_template_rule`
 (
     `id`           bigint unsigned  not null auto_increment comment 'id for index',
     `code`         varchar(16)      not null default '' comment '模板 编码',
@@ -119,9 +119,9 @@ create table if not exists `t_coder_template_entry`
     `updated_at`   datetime         not null default current_timestamp on update current_timestamp comment '更新时间',
     primary key (`id`) using btree
 ) engine = InnoDB comment '模板项目中每一项';
-create unique index `unq_template_entry_code` on `t_coder_template_entry` (`code`);
-create index `idx_template_entry_template_code` on `t_coder_template_entry` (`template_code`);
-create index `idx_template_entry_path` on `t_coder_template_entry` (`path`(20));
+create unique index `unq_template_rule_code` on `t_coder_template_rule` (`code`);
+create index `idx_template_rule_template_code` on `t_coder_template_rule` (`template_code`);
+create index `idx_template_rule_path` on `t_coder_template_rule` (`path`(20));
 
 create table if not exists `t_coder_project`
 (

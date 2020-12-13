@@ -16,6 +16,26 @@ class Template(declarative_base(), Unified):
     api_token = Column(String(), default="", nullable=False)
     comment = Column(String(), default="", nullable=False)
 
+    def override_by(self, template):
+        if template.name is not None and template.name.strip() != "":
+            self.name = template.name
+        if template.type is not None:
+            self.type = template.type
+        if template.sort is not None:
+            self.sort = template.sort
+        if template.language_code is not None and template.language_code.strip() != "":
+            self.language_code = template.language_code
+        if template.framework_code is not None and template.framework_code.strip() != "":
+            self.framework_code = template.framework_code
+        if template.branch is not None and template.branch.strip() != "":
+            self.branch = template.branch
+        if template.commit is not None and template.commit.strip() != "":
+            self.commit = template.commit
+        if template.api_token is not None and template.api_token.strip() != "":
+            self.api_token = template.api_token
+        if template.comment is not None and template.comment.strip() != "":
+            self.comment = template.comment
+
 class TemplatePageCriteria(Page):
     code = None
     name = None

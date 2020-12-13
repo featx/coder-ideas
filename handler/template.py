@@ -31,7 +31,7 @@ class TemplateHandler:
     @json_exception
     async def put(self, request: Request):
         body = await request.json()
-        template = self.__template_manager.create(CreatingTemplate(body))
+        template = self.__template_manager.update(UpdatingTemplate(body))
         return {"id": template.id, "code": template.code}
 
     @json_exception
@@ -58,12 +58,15 @@ class TemplateHandler:
         body = await request.json()
         return self.__template_manager.page(body)
 
-    @json_exception
-    async def pull(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
-
 
 class CreatingTemplate(ModelFromDict):
     type = 0
     sort = 0
+    language_code = ""
     framework_code = ""
+
+class UpdatingTemplate(ModelFromDict):
+    code = ""
+    repo_url = None
+    commit = ""
+    branch = ""

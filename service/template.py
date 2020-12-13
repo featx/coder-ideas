@@ -23,6 +23,17 @@ class TemplateService:
         return template
 
     @transactional
+    def update(self, update_template: Template):
+        if update_template.code is None or update_template.code.strip() == "":
+            return None
+        session = self._scoped_session()
+        template = session.query(Template).filter_by(code=update_template.code).first()
+        if template is None:
+            return None
+        template.override_by(update_template)
+        return template
+
+    @transactional
     def delete(self, code: str):
         if code is None or code.strip() == "":
             return None

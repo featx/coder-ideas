@@ -33,10 +33,25 @@ class TemplateManager:
             repo = Repo.clone_from(repo_url, local_dir, branch=creating_template.branch)
         else:
             repo = Repo.init(local_dir) # Checkout the branch
-            # repo.git.checkout(creating_template.branch)
+            repo.git.checkout(creating_template.branch)
         creating_template.commit = repo.head.commit.hexsha
         repo.close()
         return self.__template_service.create(_to_template(creating_template))
+
+    def update(self, updating_template):
+        if updating_template.code is None or updating_template.code.strip() == "":
+            raise Exception("Parameter code required")
+        template = self.__template_service.find_by_code(updating_template.code)
+        if template is None:
+            raise Exception("Template not found")
+        if updating_template.branch is not None and updating_template.branch.strip() != "":
+            local_dir = self._repo_dir(template.repo_url)
+            repo = Repo.init(local_dir)
+            repo.git.checkout(updating_template.branch)
+            repo.git.pull()
+            updating_template.commit = repo.head.commit.hexsha
+            repo.close()
+        return self.__template_service.update(_to_template(updating_template))
 
     def delete(self, code):
         self.__template_service.delete(code)

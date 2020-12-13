@@ -4,14 +4,10 @@ from git import Repo
 from git import Actor
 
 from manage.domain import _from_project_domain
-# from manage.template import _from_project_template
-# from plugin import delete_dir
-from manage.entry import _from_template_entry
 from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
 from service.model.project import Project, ProjectPageCriteria
 from service.project import ProjectService
-# from service.template_entry import ProjectTemplateService
 from service.template import TemplateService
 
 
@@ -58,10 +54,6 @@ class ProjectManager:
     def detail(self, project_code: str):
         project = self.__project_service.find_by_code(project_code)
         result = _from_project(project)
-        templates = self.__template_service.find_by_project_code(project_code)
-        result["templates"] = []
-        for template in templates:
-            result["templates"].append(_from_template_entry(template))
         domains = self.__domain_service.find_by_project_code(project_code)
         result["domains"] = []
         for domain in domains:
