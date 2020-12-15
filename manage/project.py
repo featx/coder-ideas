@@ -1,8 +1,11 @@
 import os
+import shutil
 
 from git import Repo
 from git import Actor
 
+from context.exception import BusinessError
+from manage import _repo_dir
 from manage.domain import _from_project_domain
 from plugin.language_type import dict_type_by_lang_code
 from service.project_domain import ProjectDomainService
@@ -12,37 +15,44 @@ from service.template import TemplateService
 
 
 class ProjectManager:
-    def __init__(self, services, workspace: str):
+    def __init__(self, services, templates: str, workspace: str):
         self.__project_service: ProjectService = services["project"]
         self.__template_service: TemplateService = services["template"]
         self.__domain_service: ProjectDomainService = services["project-domain"]
         self.__git_workspace = workspace
-
-    def __git_repo_update(self, project: Project, files: list):
-        repo_dir = os.path.join(self.__git_workspace, project.name)
-        project_dir = os.path.join(self.__git_workspace, project.code)
-        os.rename(repo_dir, project_dir)
-        git_repo = Repo.init(project_dir)
-        git_repo.index.add(files)
-        if project.repo_url is not None and project.repo_url.strip() != "":
-            git_repo.create_remote('origin', project.repo_url)
-        git_repo.close()
+        self.__git_templates = templates
 
     def create(self, creating_project):
-        # files = []
-        # for entry in repo.index.entries:
-        #     files.append(entry[0])
-        # delete_dir(os.path.join(repo_dir, ".git"))
+        if creating_project.template_code is None or creating_project.template_code.strip() == "":
+            raise BusinessError.PARAMETER_LOST
+        template = self.__template_service.find_by_code(creating_project.template_code)
+        if template is None:
+            raise BusinessError.TEMPLATE_NOT_FOUND
+        template_dir = _repo_dir(self.__git_templates, template.repo_url)
+        # TODO May be require lock repo
+        template_repo = Repo.init(template_dir)
+        files = []
+        for entry in template_repo.index.entries:
+            files.append(entry[0])
+        template_repo.close()
 
         project = self.__project_service.create(_to_project(creating_project))
-        # self.__git_repo_update(project, files)
+        project_dir = os.path.join(self.__git_workspace, project.code)
+        shutil.copytree(template_dir, project_dir)
+        shutil.rmtree(project_dir + os.path.sep + ".git")
+
+        project_repo = Repo.init(project_dir)
+        project_repo.index.add(files)
+        if project.repo_url is not None and project.repo_url.strip() != "":
+            project_repo.create_remote('origin', project.repo_url)
+        project_repo.close()
+
         return project
 
     def update(self, param):
         if param.project_code is None or param.project_code.strip() != "":
             return
         project = self.__project_service.find_by_code(param.project_code)
-        self.__git_repo_update(project, [])
 
     def delete(self, project_code):
         self.__project_service.delete(project_code)
@@ -147,13 +157,9 @@ def _to_project(creating_project):
     return Project(
         code=creating_project.code,
         name=creating_project.name,
+        type=creating_project.type,
         image_url=creating_project.image_url,
-        language_code=creating_project.language_code,
-        framework_code=creating_project.framework_code,
-        template_repo_url=creating_project.template_repo_url,
-        template_api_token=creating_project.template_api_token,
-        template_branch=creating_project.template_branch,
-        template_commit=creating_project.template_commit,
+        template_code=creating_project.template_code,
         repo_url=creating_project.repo_url,
         api_token=creating_project.api_token,
         branch=creating_project.branch,

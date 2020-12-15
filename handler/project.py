@@ -23,7 +23,7 @@ class ProjectHandler:
     @json_exception
     async def create(self, request: Request):
         body = await request.json()
-        project = self.__project_manager.create(ModelFromDict(body))
+        project = self.__project_manager.create(CreatingProject(body))
         return {"id": project.id, "code": project.code}
 
     @json_exception
@@ -64,3 +64,9 @@ class ProjectHandler:
     async def commit_push(self, request: Request):
         body = await request.json()
         self.__project_manager.commit_push(ModelFromDict(body))
+
+
+class CreatingProject(ModelFromDict):
+    type = 0
+    sort = 0
+    template_code = None

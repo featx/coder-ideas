@@ -84,7 +84,7 @@ class CoderApplication:
         git_workspace = self.context.config["version_control"]["git"]["workspace"]
         self.context.managers["template"] = TemplateManager(self.context.services, git_templates)
         self.context.managers["template-rule"] = TemplateRuleManager(self.context.services)
-        self.context.managers["project"] = ProjectManager(self.context.services, git_workspace)
+        self.context.managers["project"] = ProjectManager(self.context.services, git_templates, git_workspace)
 
         self.context.managers["domain"] = DomainManager(self.context.services)
 

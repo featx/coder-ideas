@@ -2,6 +2,7 @@ import os
 
 from git import Repo
 
+from manage import _repo_dir
 from service.model.template import Template, TemplatePageCriteria
 from service.template import TemplateService
 
@@ -11,21 +12,8 @@ class TemplateManager:
         self.__template_service: TemplateService = services["template"]
         self.__git_templates = templates
 
-    def _repo_dir(self, url: str):
-        l = url.index(":") + 1
-        if l < 0:
-            l = 0
-        r = len(url)
-        if url.endswith(".git"):
-            r = r - 4
-        paths = url[l:r]
-        while paths.startswith('/'):
-            paths = paths[1:]
-        result = os.path.join(self.__git_templates, paths)
-        return result
-
     def create(self, creating_template):
-        local_dir = self._repo_dir(creating_template.repo_url)
+        local_dir = _repo_dir(self.__git_templates, creating_template.repo_url)
         # Clone from template project
         repo_url = _repo_with_token_url(creating_template.repo_url, creating_template.api_token)
         if not os.path.exists(local_dir):
@@ -102,6 +90,7 @@ def _repo_with_token_url(url, api_token):
         path = url[7:]
     return "{}://{}{}".format(schema, api_token, path)
 
+
 def _to_template(creating_template):
     return Template(
         code=creating_template.code,
@@ -116,6 +105,7 @@ def _to_template(creating_template):
         commit=creating_template.commit,
         comment=creating_template.comment
     )
+
 
 def _from_template(template: Template):
     return {
