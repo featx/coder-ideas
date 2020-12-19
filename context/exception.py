@@ -10,7 +10,7 @@ class BusinessException(Exception):
         self.code = code
         self.message = message
 
-    def and_with(self, extra):
+    def with_extra(self, extra):
         self.extra = extra
         return self
 
@@ -39,3 +39,7 @@ class BusinessError(Enum):
 
     SYSTEM_ERROR = BusinessException(code=5000000, message="System error")
 
+    def with_info(self, extra):
+        if isinstance(self.value, BusinessException):
+            return self.value.with_extra(extra)
+        return None

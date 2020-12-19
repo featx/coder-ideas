@@ -51,7 +51,8 @@ class TemplateHandler:
 
     @json_exception
     async def detail(self, request: Request):
-        return web.json_response({"code": -1, "result": "not implemented"})
+        code = request.query.get("code")
+        return self.__template_manager.detail(code)
 
     @json_exception
     async def page(self, request: Request):

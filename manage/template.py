@@ -2,14 +2,18 @@ import os
 
 from git import Repo
 
+from context.exception import BusinessError
 from manage import _repo_dir
 from service.model.template import Template, TemplatePageCriteria
+from service.model.template_rule import TemplateRule
 from service.template import TemplateService
+from service.template_rule import TemplateRuleService
 
 
 class TemplateManager:
     def __init__(self, services, templates: str):
         self.__template_service: TemplateService = services["template"]
+        self.__template_rule_service: TemplateRuleService = services["template-rule"]
         self.__git_templates = templates
 
     def create(self, creating_template):
@@ -36,7 +40,7 @@ class TemplateManager:
         print(updating_template.branch)
         if updating_template.branch is not None and updating_template.branch.strip() != "":
             branch = updating_template.branch
-        local_dir = self._repo_dir(template.repo_url)
+        local_dir = _repo_dir(self.__git_templates, template.repo_url)
         repo = Repo.init(local_dir)
         repo.git.checkout(branch)
         repo.git.pull()
@@ -47,9 +51,30 @@ class TemplateManager:
     def delete(self, code):
         self.__template_service.delete(code)
 
-    def get(self, template_code):
-        project = self.__template_service.find_by_code(template_code)
-        return _from_template(project)
+    def __template(self, code: str):
+        if code is None or code.strip() == "":
+            raise BusinessError.PARAMETER_LOST.with_info("code")
+        template = self.__template_service.find_by_code(code)
+        if template is None:
+            raise BusinessError.TEMPLATE_NOT_FOUND.with_info(code)
+        return template
+
+    def get(self, template_code: str):
+        template = self.__template(template_code)
+        return _from_template(template)
+
+    def detail(self, code: str):
+        template = self.__template(code)
+        template_info = _from_template(template)
+        template_info["rules"] = []
+
+        rules = self.__template_rule_service.list_of(code)
+        if rules is None or len(rules) == 0:
+            return template_info
+        for rule in rules:
+            template_info["rules"].append(_from_template_rule(rule))
+
+        return template_info
 
     def page(self, kv_map):
         count, result_list = self.__template_service.find_by_page_criteria(TemplatePageCriteria(kv_map))
@@ -119,4 +144,16 @@ def _from_template(template: Template):
         "branch": template.branch,
         "commit": template.commit,
         "comment": template.comment
+    }
+
+
+def _from_template_rule(template_rule: TemplateRule):
+    return {
+        "code": template_rule.code,
+        "name": template_rule.name,
+        "template_code": template_rule.template_code,
+        "path": template_rule.path,
+        "engine": template_rule.engine,
+        "data": template_rule.data,
+        "comment": template_rule.comment
     }

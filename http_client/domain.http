@@ -1,0 +1,30 @@
+POST http://{{SERVER_HOST}}:{{CODER_PORT}}/project/domain
+Content-Type: application/json
+
+{
+  "code": "",
+  "project_code": "PJTpbupb9gpm4w",
+  "name": "UserContact",
+  "properties": [{
+    "name": "code",
+    "type": 0
+  },{
+    "name": "name",
+    "type": 0
+  },{
+    "name": "contact",
+    "type": 0
+  },{
+    "name": "phone",
+    "type": 0
+  },{
+    "name": "phone_verified",
+    "type": 1
+  }, {
+    "name": "user_code",
+    "type": 0
+  },{
+    "name": "default",
+    "type": 1
+  }]
+}

@@ -175,6 +175,7 @@ def _from_project(project: Project):
         "type": project.type,
         "status": project.status,
         "image_url": project.image_url,
+        "template_code": project.template_code,
         "repo_url": project.repo_url,
         "branch": project.branch,
         "comment": project.comment
