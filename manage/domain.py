@@ -16,7 +16,7 @@ class DomainManager:
     def create(self, creating_domain):
         project = self.__project_service.find_by_code(creating_domain.project_code)
         if project is None:
-            raise BusinessError.PROJECT_NOT_FOUND.value.and_with(creating_domain.project_code)
+            raise BusinessError.PROJECT_NOT_FOUND.with_info(creating_domain.project_code)
         domain = self.__domain_service.create(_to_project_domain(creating_domain))
         domain_properties = []
         for prop in creating_domain.properties:

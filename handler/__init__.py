@@ -8,8 +8,8 @@ class ModelFromDict:
     code = ""
     comment = ""
 
-    def __init__(self, dict):
-        self.__dict__.update(dict)
+    def __init__(self, diction: dict):
+        self.__dict__.update(diction)
 
 
 def json_exception(handler):

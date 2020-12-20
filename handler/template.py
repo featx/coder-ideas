@@ -66,6 +66,7 @@ class CreatingTemplate(ModelFromDict):
     language_code = ""
     framework_code = ""
 
+
 class UpdatingTemplate(ModelFromDict):
     repo_url = None
     name = None

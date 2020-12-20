@@ -10,6 +10,7 @@ from handler.domain import DomainHandler
 from handler.framework import FrameworkHandler
 from handler.language import LanguageHandler
 from handler.project import ProjectHandler
+from handler.rule import RuleHandler
 from handler.template import TemplateHandler
 from manage.data_engine import DataEngineManager
 from manage.domain import DomainManager
@@ -83,7 +84,7 @@ class CoderApplication:
         git_templates = self.context.config["version_control"]["git"]["templates"]
         git_workspace = self.context.config["version_control"]["git"]["workspace"]
         self.context.managers["template"] = TemplateManager(self.context.services, git_templates)
-        self.context.managers["template-rule"] = TemplateRuleManager(self.context.services)
+        self.context.managers["template-rule"] = TemplateRuleManager(self.context.services, git_templates)
         self.context.managers["project"] = ProjectManager(self.context.services, git_templates, git_workspace)
 
         self.context.managers["domain"] = DomainManager(self.context.services)
@@ -94,6 +95,7 @@ class CoderApplication:
         self.context.handlers.append(FrameworkHandler(self.context.managers))
 
         self.context.handlers.append(TemplateHandler(self.context.managers))
+        self.context.handlers.append(RuleHandler(self.context.managers))
 
         self.context.handlers.append(ProjectHandler(self.context.managers))
         self.context.handlers.append(DomainHandler(self.context.managers))

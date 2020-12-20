@@ -10,5 +10,5 @@ def transactional(func):
             return result
         except Exception as e:
             session.rollback()
-            raise BusinessError.SYSTEM_ERROR.value.and_with(e.args)
+            raise BusinessError.SYSTEM_ERROR.with_info(e.args)
     return actual_func
