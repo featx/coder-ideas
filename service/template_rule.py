@@ -40,3 +40,9 @@ class TemplateRuleService:
 
     def list_of(self, template_code: str):
         pass
+
+    @transactional
+    def find_by_template_code(self, template_code: str):
+        session = self._scoped_session()
+        return session.query(TemplateRule).filter_by(template_code=template_code) \
+            .order_by(TemplateRule.sort).all()

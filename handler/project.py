@@ -56,7 +56,7 @@ class ProjectHandler:
     @json_exception
     async def generate(self, request: Request):
         body = await request.json()
-        self.__project_manager.generate(ModelFromDict(body))
+        self.__project_manager.generate(GenerateProject(body))
 #TODO
         return True
 
@@ -70,3 +70,8 @@ class CreatingProject(ModelFromDict):
     type = 0
     sort = 0
     template_code = None
+
+
+class GenerateProject(ModelFromDict):
+    domain_code = None
+    rule_code = None

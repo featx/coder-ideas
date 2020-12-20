@@ -1,0 +1,22 @@
+POST http://{{SERVER_HOST}}:{{CODER_PORT}}/template/rule
+Content-Type: application/json
+
+{
+	"code": "",
+	"type": 0,
+    "engine": 0,
+    "name": "Spec-Entry-Test",
+    "template_code": "TPLnp4zpyeh00g",
+    "path": "module-entr/src/test/java/org/featx/templet/app/facade",
+    "data": {
+        "org/featx/template/app": "com/juext/haldus/user",
+        "org.featx.template.app": "com.juext.haldus.user",
+        "DomainModule" : "${domain.name|camel}",
+        "domainModule" : "${domain.name|camel}",
+        "domain_module": "${domain.name|snake}"
+
+        },
+    "comment": ""
+}
+
+###:

@@ -4,14 +4,11 @@ import os
 from git import Repo, Actor
 
 from context.exception import BusinessError
-from manage import _repo_dir
+from manage import _repo_dir, _git_repo_push, RULE_MARK, FEATX_CODER
 from service.model.template import Template
 from service.model.template_rule import TemplateRule
 from service.template import TemplateService
 from service.template_rule import TemplateRuleService
-
-
-RULE_MARK = ".rul"
 
 
 class TemplateRuleManager:
@@ -135,38 +132,9 @@ def _commit_and_push(template_dir: str, files: dict, template: Template):
     try:
         repo.index.remove(files.keys())
         repo.index.add(files.values())
-        # TODO While permission component change the hard code to variables
-        actor = Actor("Coder", "coder@featx.org")
-        repo.index.commit("rule files renamed", author=actor, committer=actor)
+        repo.index.commit("rule files renamed", author=FEATX_CODER, committer=FEATX_CODER)
 
     except Exception as e:
         # TODO Logger Required
         pass
-    _git_repo_push(repo, template)
-
-
-def _git_repo_push(repo: Repo,  template: Template):
-    # check current branch is the template branch
-    if repo.active_branch.name != template.branch:
-        repo.head.reference = repo.create_head(template.branch)
-        assert not repo.head.is_detached
-        repo.head.reset(index=True, working_tree=True)
-    # check repo url is configured.  No remote to push
-    if template.repo_url is None or template.repo_url.strip() == "":
-        return
-    url = template.repo_url
-    # if api token configured, set it.
-    if template.api_token is not None and template.api_token.strip() != "":
-        url = url.replace("https://", "https://%s@" % (template.api_token))\
-                .replace("http://", "http://%s@" % (template.api_token))
-    # check if origin remote existed
-    if 'origin' not in repo.remotes:
-        repo.create_remote('origin', url)
-    else:
-        origin = repo.remotes.origin
-        origin.set_url(url)
-    # check remote branch existed
-    if template.branch in repo.remotes['origin'].refs:
-        repo.remotes.origin.push()
-    else:
-        repo.git.push('--set-upstream', 'origin', template.branch)
+    _git_repo_push(repo, template.repo_url, template.branch, template.api_token)

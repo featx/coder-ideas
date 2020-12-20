@@ -31,6 +31,7 @@ def _to_project_domain(creating_domain):
     return ProjectDomain(
         code=creating_domain.code,
         name=creating_domain.name,
+        type=creating_domain.type,
         project_code=creating_domain.project_code,
         comment=creating_domain.comment
     )
