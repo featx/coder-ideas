@@ -2,7 +2,6 @@ import os
 import shutil
 
 from git import Repo
-from git import Actor
 
 from context.exception import BusinessError
 from manage import _repo_dir, _git_repo_push, RULE_MARK, FEATX_CODER
