@@ -233,6 +233,7 @@ def _render_domain_files(rule_path, domain_path, data, domains: list):
         domain_file = _replace_data(domain_path, data)
         if domain_file.endswith(RULE_MARK):
             domain_file = domain_file[:-4]
+        data["properties"] = domain.properties
         _copy_and_replace(rule_path, domain_file, data)
         domain_files.append(domain_file)
     return domain_files
