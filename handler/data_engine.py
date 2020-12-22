@@ -13,6 +13,7 @@ class DataEngineHandler:
         return [web.post('/data-engine', self.create),
                 web.delete('/data-engine', self.delete),
                 web.get('/data-engine', self.get),
+                web.get('/data-engines', self.list_all),
                 web.post('/project/data-engine', self.create_for_project),
                 web.delete('/project/data-engine', self.delete_of_project),
                 web.get('/project/data-engine', self.get_of_project)]
@@ -30,6 +31,10 @@ class DataEngineHandler:
     @json_exception
     async def get(self, request: Request):
         return web.json_response({"code": -1, "result": "not implemented"})
+
+    @json_exception
+    async def list_all(self, request: Request):
+        return self.__data_engine_manager.list_all()
 
     @json_exception
     async def create_for_project(self, request: Request):

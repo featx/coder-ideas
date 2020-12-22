@@ -1,0 +1,19 @@
+POST http://{{SERVER_HOST}}:{{CODER_PORT}}/project
+Content-Type: application/json
+
+{
+  "code": "",
+  "name": "my-project",
+  "type": 1,
+  "template_code": "https://github.com/featx/spring-cloud-alibaba.git",
+  "image_url": "",
+  "language_code": "LAN100001",
+  "framework_code": "FRW100001",
+  "repo_url": "https://github.com/excepts/my-project.git",
+  "branch": "coder",
+  "api_token": ""
+}
+###:
+GET http://{{SERVER_HOST}}:{{CODER_PORT}}/project?code=PJTpbupb9gpm4w
+###:
+GET http://{{SERVER_HOST}}:{{CODER_PORT}}/project/detail?code=PJTpbupb9gpm4w

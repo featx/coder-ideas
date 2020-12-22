@@ -9,5 +9,6 @@ class Framework(declarative_base(), Update):
     __tablename__ = "t_coder_framework"
     code = Column(String(), default="", nullable=False)
     name = Column(String(), default="", nullable=False)
+    sort = Column(Integer(), default=0, nullable=False)
     alias = Column(String(), default="", nullable=False)
     comment = Column(String(), default="", nullable=False)

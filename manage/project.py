@@ -1,77 +1,62 @@
 import os
+import shutil
 
 from git import Repo
-from git import Actor
 
+from context.exception import BusinessError
+from manage import _repo_dir, _git_repo_push, RULE_MARK, FEATX_CODER
 from manage.domain import _from_project_domain
-from manage.template import _from_project_template
-from plugin import delete_dir
 from plugin.language_type import dict_type_by_lang_code
+from service.model.project_domain import ProjectDomain
 from service.project_domain import ProjectDomainService
 from service.model.project import Project, ProjectPageCriteria
 from service.project import ProjectService
-from service.project_template import ProjectTemplateService
-
-
-def _repo_with_token_url(url, api_token):
-    if url is None:
-        return None
-
-    schema = "https"
-
-    if api_token is None:
-        api_token = ""
-    else:
-        api_token = "{}@".format(api_token)
-
-    path = url
-    if url.startswith("https"):
-        path = url[8:]
-    elif url.startswith("http"):
-        schema = "http"
-        path = url[7:]
-    return "{}://{}{}".format(schema, api_token, path)
+from service.template import TemplateService
+from service.template_rule import TemplateRuleService
 
 
 class ProjectManager:
-    def __init__(self, services, workspace):
+    def __init__(self, services, templates: str, workspace: str):
         self.__project_service: ProjectService = services["project"]
-        self.__template_service: ProjectTemplateService = services["project-template"]
+        self.__template_service: TemplateService = services["template"]
+        self.__template_rule_service: TemplateRuleService = services["template-rule"]
         self.__domain_service: ProjectDomainService = services["project-domain"]
         self.__git_workspace = workspace
-
-    def __git_repo_update(self, project: Project, files: list):
-        repo_dir = os.path.join(self.__git_workspace, project.name)
-        project_dir = os.path.join(self.__git_workspace, project.code)
-        os.rename(repo_dir, project_dir)
-        git_repo = Repo.init(project_dir)
-        git_repo.index.add(files)
-        if project.repo_url is not None and project.repo_url.strip() != "":
-            git_repo.create_remote('origin', project.repo_url)
-        git_repo.close()
+        self.__git_templates = templates
 
     def create(self, creating_project):
-        repo_dir = os.path.join(self.__git_workspace, creating_project.name)
-
-        # Clone from template project
-        url = _repo_with_token_url(creating_project.template_repo_url, creating_project.template_api_token)
-        repo = Repo.clone_from(url, repo_dir, branch=creating_project.template_branch)
-        creating_project.template_commit = repo.head.commit.hexsha
+        if creating_project.template_code is None or creating_project.template_code.strip() == "":
+            raise BusinessError.PARAMETER_LOST.with_info("template_code")
+        template = self.__template_service.find_by_code(creating_project.template_code)
+        if template is None:
+            raise BusinessError.TEMPLATE_NOT_FOUND.with_info(creating_project.template_code)
+        template_dir = _repo_dir(self.__git_templates, template.repo_url)
+        # TODO May be require lock repo
+        template_repo = Repo.init(template_dir)
         files = []
-        for entry in repo.index.entries:
-            files.append(entry[0])
-        repo.close()
-        delete_dir(os.path.join(repo_dir, ".git"))
+        for file, ind in template_repo.index.entries:
+            if not file.endswith(RULE_MARK):
+                files.append(file)
+        template_repo.close()
 
         project = self.__project_service.create(_to_project(creating_project))
-        self.__git_repo_update(project, files)
+        project_dir = os.path.join(self.__git_workspace, project.code)
+        shutil.copytree(template_dir, project_dir)
+        shutil.rmtree(project_dir + os.path.sep + ".git")
+
+        project_repo = Repo.init(project_dir)
+        project_repo.index.add(files)
+        project_repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
+
         return project
 
     def update(self, param):
         if param.project_code is None or param.project_code.strip() != "":
-            return
+            raise BusinessError.PARAMETER_LOST.with_info("project_code")
         project = self.__project_service.find_by_code(param.project_code)
-        self.__git_repo_update(project, [])
+        if project is None:
+            raise BusinessError.PROJECT_NOT_FOUND.with_info(param.project_code)
+        return self.__project_service.update(_to_project(param))
 
     def delete(self, project_code):
         self.__project_service.delete(project_code)
@@ -83,10 +68,6 @@ class ProjectManager:
     def detail(self, project_code: str):
         project = self.__project_service.find_by_code(project_code)
         result = _from_project(project)
-        templates = self.__template_service.find_by_project_code(project_code)
-        result["templates"] = []
-        for template in templates:
-            result["templates"].append(_from_project_template(template))
         domains = self.__domain_service.find_by_project_code(project_code)
         result["domains"] = []
         for domain in domains:
@@ -106,87 +87,82 @@ class ProjectManager:
         }
 
     def generate(self, param):
-        project, domains, templates = self.__find_project_domains_templates(param)
-        if project is None:
-            return
+        project, domains, template, rules = self.__find_project_domains_rules(param)
+        template_dir = _repo_dir(self.__git_templates, template.repo_url)
         project_dir = os.path.join(self.__git_workspace, project.code)
         
         files_to_add = []
-        files_to_remove = []
-        for template in templates:
-            template.data["${language.code}"] = project.language_code
-            template_path = os.path.join(project_dir, template.path)
-            if os.path.isfile(template_path):
-                template_file = template_path
-                files_to_remove.append(template.path)
-                files_to_add += _render_domain_files(template, template_file, domains)
-            elif os.path.isdir(template_path):
-                for _file in os.listdir(template_path):
-                    template_file = os.path.join(template_path, _file)
-                    files_to_remove.append(os.path.join(template.path, _file))
-                    files_to_add += _render_domain_files(template, template_file, domains)
+        for rule in rules:
+            rule.data["${language.code}"] = template.language_code
+            rule_path = os.path.join(template_dir, rule.path)
+            domain_path = os.path.join(project_dir, rule.path)
+            if os.path.isfile(rule_path):
+                files_to_add += _render_domain_files(rule_path, domain_path, rule.data, domains)
+            elif os.path.isdir(rule_path):
+                for _file in os.listdir(rule_path):
+                    rule_file = os.path.join(rule_path, _file)
+                    domain_file = os.path.join(domain_path, _file)
+                    files_to_add += _render_domain_files(rule_file, domain_file, rule.data, domains)
         if len(files_to_add) > 0:
             repo = Repo(project_dir)
             repo.index.add(files_to_add)
-            _git_repo_remove(files_to_remove, repo)
 
-    def __find_project_domains_templates(self, param):
-        domain = None
-        template = None
-        if hasattr(param, 'domain_code'):
+    def __find_project_domains_rules(self, param):
+        if param.code is None or param.code.strip() == "":
+            if param.domain_code is None or param.domain_code.strip() == "":
+                raise BusinessError.PARAMETER_LOST.with_info("code or domain_code")
             domain = self.__domain_service.find_by_code(param.domain_code)
-        if hasattr(param, 'template_code'):
-            template = self.__template_service.find_by_code(param.template_code)
-        domains = []
-        templates = []
-        if domain is None and template is None:
-            project = self.__project_service.find_by_code(param.project_code)
-            if project is None:
-                return None, None, None
-            domains = self.__domain_service.find_by_project_code(param.project_code)
-            templates = self.__template_service.find_by_project_code(param.project_code)
-        elif domain is None:
-            project = self.__project_service.find_by_code(template.project_code)
-            domains = self.__domain_service.find_by_project_code(param.project_code)
-            templates.append(template)
-        elif template is None:
+            if domain is None:
+                raise BusinessError.DOMAIN_NOT_FOUND.with_info(param.domain_code)
+            domains = [domain]
             project = self.__project_service.find_by_code(domain.project_code)
-            domains.append(domain)
-            templates = self.__template_service.find_by_project_code(param.project_code)
         else:
-            project = self.__project_service.find_by_code(domain.project_code)
-            domains.append(domain)
-            templates.append(template)
-        return project, domains, templates
+            project = self.__project_service.find_by_code(param.code)
+            if project is None:
+                raise BusinessError.PROJECT_NOT_FOUND.with_info(param.code)
+            domains = self.__domain_service.find_by_project_code(param.code)
+
+        if domains is None or len(domains) == 0 or project is None:
+            raise BusinessError.NOTHING_TO_GENERATE.with_info("no domains")
+
+        template = self.__template_service.find_by_code(project.template_code)
+        if template is None:
+            raise BusinessError.TEMPLATE_NOT_FOUND.with_info(project.template_code)
+        if param.rule_code is None or param.rule_code.strip() == "":
+            rules = self.__template_rule_service.find_by_template_code(template.code)
+            if rules is None or len(rules) == 0:
+                raise BusinessError.NOTHING_TO_GENERATE.with_info("no rules")
+        else:
+            rule = self.__template_rule_service.find_by_code(param.rule_code)
+            if rule is None:
+                raise BusinessError.RULE_NOT_FOUND.with_info(param.rule_code)
+            rules = [rule]
+        return project, domains, template, rules
 
     def commit_push(self, param):
         if param.project_code is None or param.project_code.strip() == "":
-            return 
+            raise BusinessError.PARAMETER_LOST.with_info("project_code")
         project = self.__project_service.find_by_code(param.project_code)
+        if project is None:
+            raise BusinessError.PROJECT_NOT_FOUND.with_info(param.project_code)
         project_dir = os.path.join(self.__git_workspace, project.code)
         repo = Repo(project_dir)
         
         try:
-            repo.commit("HEAD")
+            repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
         except Exception:
-            # TODO While permission component change the hard code to variables
-            actor = Actor("之外", "excepts@featx.org")
-            repo.index.commit("Init", author=actor, committer=actor)
+            pass
 
-        _git_repo_push(repo, project)
+        _git_repo_push(repo, project.repo_url, project.branch, project.api_token)
 
 
 def _to_project(creating_project):
     return Project(
         code=creating_project.code,
         name=creating_project.name,
+        type=creating_project.type,
         image_url=creating_project.image_url,
-        language_code=creating_project.language_code,
-        framework_code=creating_project.framework_code,
-        template_repo_url=creating_project.template_repo_url,
-        template_api_token=creating_project.template_api_token,
-        template_branch=creating_project.template_branch,
-        template_commit=creating_project.template_commit,
+        template_code=creating_project.template_code,
         repo_url=creating_project.repo_url,
         api_token=creating_project.api_token,
         branch=creating_project.branch,
@@ -202,17 +178,38 @@ def _from_project(project: Project):
         "type": project.type,
         "status": project.status,
         "image_url": project.image_url,
+        "template_code": project.template_code,
         "repo_url": project.repo_url,
         "branch": project.branch,
         "comment": project.comment
     }
 
 
-def _render_data(template: dict, domain):
+def snake_camel(camel: str):
+    up_index = []
+    for i, c in enumerate(camel):
+        if c.isupper():
+            up_index.append(i)
+    ls = camel.lower()
+    list_ls = list(ls)
+    if up_index:
+        addi = 0
+        for g in up_index:
+            list_ls.insert(g + addi, '_')
+            addi += 1
+    last_ls = ''.join(list_ls)
+    return last_ls
+
+
+def _render_data(template: dict, domain: ProjectDomain):
     data = dict()
     for key, value in template.items():
-        k = key.replace("${domain.name}", domain.name)
-        v = value.replace("${domain.name}", domain.name)
+        k = key.replace("${domain.name|camel}", domain.name)
+        k = k.replace("${domain.name|Camel}", domain.name)
+        k = k.replace("${domain.name|snake}", snake_camel(domain.name))
+        v = value.replace("${domain.name|camel}", domain.name)
+        v = v.replace("${domain.name|Camel}", domain.name)
+        v = v.replace("${domain.name|snake}", snake_camel(domain.name))
         data[k] = v
     if hasattr(domain, "properties"):
         data["properties"] = domain.properties
@@ -228,12 +225,15 @@ def _replace_data(origin: str, data: dict):
     return result
 
 
-def _render_domain_files(template, template_file: str, domains: tuple):
+def _render_domain_files(rule_path, domain_path, data, domains: list):
     domain_files = []
     for domain in domains:
-        data = _render_data(template.data, domain)
-        domain_file = _replace_data(template_file, data)
-        _copy_and_replace(template_file, domain_file, data)
+        data = _render_data(data, domain)
+        domain_file = _replace_data(domain_path, data)
+        if domain_file.endswith(RULE_MARK):
+            domain_file = domain_file[:-4]
+        data["properties"] = domain.properties
+        _copy_and_replace(rule_path, domain_file, data)
         domain_files.append(domain_file)
     return domain_files
 
@@ -241,6 +241,7 @@ def _render_domain_files(template, template_file: str, domains: tuple):
 def _copy_and_replace(src: str, dst: str, data: dict):
     dst_dir, _ = os.path.split(dst)
     os.makedirs(dst_dir, exist_ok=True)
+    read, write = None, None
     try:
         read = open(src, "r", encoding="utf-8")
         write = open(dst, "w", encoding="utf-8")
@@ -252,7 +253,7 @@ def _copy_and_replace(src: str, dst: str, data: dict):
                 properties = None
             new_line = _replace_if_prop_exist(new_line, data["${language.code}"], properties)
             write.write(new_line)
-            write.flush()
+        write.flush()
     except Exception as e:
         pass
     finally:
@@ -271,44 +272,3 @@ def _replace_if_prop_exist(line: str, language_code: str, properties: list):
         result += line.replace("${property.type}", type_map[prop.type]).replace("${property.name}", prop.name)
         result += "\n"
     return result
-
-
-def _git_repo_remove(files_to_remove: list, repo: Repo):
-    files_remove = files_to_remove.copy()
-    for remove_file in files_to_remove:
-        require_drop = False
-        for entry in repo.index.entries:
-            if entry[0] == remove_file:
-                require_drop = True
-                break
-        if not require_drop:
-            files_remove.remove(remove_file)
-    if len(files_remove) > 0:
-        repo.index.remove(files_remove)
-
-
-def _git_repo_push(repo: Repo, project: Project):
-    # check current branch is the project configured branch 
-    if repo.active_branch.name != project.branch:
-        repo.head.reference = repo.create_head(project.branch)
-        assert not repo.head.is_detached
-        repo.head.reset(index=True, working_tree=True)
-    # check repo url is configured.  No remote to push
-    if project.repo_url is None or project.repo_url.strip() == "":
-        return
-    url = project.repo_url
-    # if api token configured, set it.
-    if project.api_token is not None and project.api_token.strip() != "":
-        url = url.replace("https://", "https://%s@" % (project.api_token))\
-                .replace("http://", "http://%s@" % (project.api_token))
-    # check if origin remote existed
-    if 'origin' not in repo.remotes:
-        repo.create_remote('origin', url)
-    else:
-        origin = repo.remotes.origin
-        origin.set_url(url)
-    # check remote branch existed    
-    if project.branch in repo.remotes['origin'].refs:
-        repo.remotes.origin.push()
-    else:
-        repo.git.push('--set-upstream', 'origin', project.branch)

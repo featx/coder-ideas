@@ -26,3 +26,6 @@ class DataEngineService:
         session = self._scoped_session()
         return session.query(DataEngine).filter_by(code=code).first()
 
+    def list_all(self):
+        session = self._scoped_session()
+        return session.query(DataEngine).all()

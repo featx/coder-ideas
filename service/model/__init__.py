@@ -44,3 +44,9 @@ class Page:
         if query is None:
             return None
         return query.offset(self.offset()).limit(self.size)
+
+
+def non_default(obj, d4t):
+    if obj is None:
+        return d4t
+    return obj
