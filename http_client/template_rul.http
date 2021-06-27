@@ -5,18 +5,18 @@ Content-Type: application/json
 	"code": "",
 	"type": 0,
     "engine": 0,
-    "name": "Spec-Entry-Test",
-    "template_code": "TPLnp4zpyeh00g",
-    "path": "module-entr/src/test/java/org/featx/templet/app/facade",
+    "name": "Core-Controller-Test",
+    "template_code": "TPL18iksayna0k0",
+    "path": "module-core/src/test/java/org/featx/templet/app/controller",
     "data": {
-        "org/featx/template/app": "com/juext/haldus/user",
-        "org.featx.template.app": "com.juext.haldus.user",
-        "DomainModule" : "${domain.name|camel}",
-        "domainModule" : "${domain.name|camel}",
-        "domain_module": "${domain.name|snake}"
-
+        "org/featx/templet/app": "${project.packageRoot|path}",
+        "org.featx.templet.app": "${project.packageRoot|dot}",
+        "DomainFeatureModule" : "${domain.name|camel}",
+        "domainFeatureModule" : "${domain.name|lowerCamel}",
+        "domain_feature_module": "${domain.name|snake}",
+        "domain-feature-module": "${domain.name|dash}"
         },
-    "comment": ""
+    "comment": "Core Controller Test"
 }
 
 ###:

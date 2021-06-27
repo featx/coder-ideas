@@ -3,15 +3,15 @@ Content-Type: application/json
 
 {
   "code": "",
-  "name": "my-project",
+  "name": "Musca",
   "type": 1,
-  "template_code": "https://github.com/featx/spring-cloud-alibaba.git",
+  "template_code": "TPL18iksayna0k0",
   "image_url": "",
   "language_code": "LAN100001",
   "framework_code": "FRW100001",
-  "repo_url": "https://github.com/excepts/my-project.git",
+  "repo_url": "https://github.com/sta2ry/Musca.git",
   "branch": "coder",
-  "api_token": ""
+  "api_token": "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 "
 }
 ###:
 GET http://{{SERVER_HOST}}:{{CODER_PORT}}/project?code=PJTpbupb9gpm4w

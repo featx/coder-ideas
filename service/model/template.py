@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Query
 
@@ -14,6 +14,7 @@ class Template(declarative_base(), Unified):
     branch = Column(String(), default="", nullable=False)
     commit = Column(String(), default="", nullable=False)
     api_token = Column(String(), default="", nullable=False)
+    default_rule = Column(JSON(), default={}, nullable=False)
     comment = Column(String(), default="", nullable=False)
 
     def override_by(self, template):
@@ -33,8 +34,11 @@ class Template(declarative_base(), Unified):
             self.commit = template.commit
         if template.api_token is not None and template.api_token.strip() != "":
             self.api_token = template.api_token
+        if template.default_rule is not None and template.default_rule.strip() != "":
+            self.default_rule = template.default_rule
         if template.comment is not None and template.comment.strip() != "":
             self.comment = template.comment
+
 
 class TemplatePageCriteria(Page):
     code = None

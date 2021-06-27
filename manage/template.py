@@ -1,9 +1,5 @@
-import os
-
-from git import Repo
-
 from context.exception import BusinessError
-from manage import _repo_dir
+from manage import _repo_dir, repo_clone_checkout, repo_checkout
 from service.model.template import Template, TemplatePageCriteria
 from service.model.template_rule import TemplateRule
 from service.template import TemplateService
@@ -18,16 +14,8 @@ class TemplateManager:
 
     def create(self, creating_template):
         local_dir = _repo_dir(self.__git_templates, creating_template.repo_url)
-        # Clone from template project
-        repo_url = _repo_with_token_url(creating_template.repo_url, creating_template.api_token)
-        if not os.path.exists(local_dir):
-            os.makedirs(local_dir, 755)
-            repo = Repo.clone_from(repo_url, local_dir, branch=creating_template.branch)
-        else:
-            repo = Repo.init(local_dir) # Checkout the branch
-            repo.git.checkout(creating_template.branch)
-        creating_template.commit = repo.head.commit.hexsha
-        repo.close()
+        creating_template.commit = \
+            repo_clone_checkout(creating_template.repo_url, creating_template.api_token, local_dir, creating_template.branch)
         return self.__template_service.create(_to_template(creating_template))
 
     def update(self, updating_template):
@@ -36,16 +24,11 @@ class TemplateManager:
         template = self.__template_service.find_by_code(updating_template.code)
         if template is None:
             raise Exception("Template not found")
-        branch = template.branch
-        print(updating_template.branch)
-        if updating_template.branch is not None and updating_template.branch.strip() != "":
-            branch = updating_template.branch
-        local_dir = _repo_dir(self.__git_templates, template.repo_url)
-        repo = Repo.init(local_dir)
-        repo.git.checkout(branch)
-        repo.git.pull()
-        updating_template.commit = repo.head.commit.hexsha
-        repo.close()
+        if updating_template.branch is not None and updating_template.branch.strip() != "" \
+                and updating_template.branch != template.branch:
+            #TODO The case of updating_template.repo_url != template.repo_url
+            local_dir = _repo_dir(self.__git_templates, template.repo_url)
+            updating_template.commit = repo_checkout(local_dir, updating_template.branch)
         return self.__template_service.update(_to_template(updating_template))
 
     def delete(self, code):
@@ -96,26 +79,6 @@ class TemplateManager:
         return result
 
 
-def _repo_with_token_url(url, api_token):
-    if url is None:
-        return None
-
-    schema = "https"
-
-    if api_token is None:
-        api_token = ""
-    else:
-        api_token = "{}@".format(api_token)
-
-    path = url
-    if url.startswith("https"):
-        path = url[8:]
-    elif url.startswith("http"):
-        schema = "http"
-        path = url[7:]
-    return "{}://{}{}".format(schema, api_token, path)
-
-
 def _to_template(creating_template):
     return Template(
         code=creating_template.code,
@@ -126,6 +89,7 @@ def _to_template(creating_template):
         framework_code=creating_template.framework_code,
         repo_url=creating_template.repo_url,
         api_token=creating_template.api_token,
+        default_rule=creating_template.default_rule,
         branch=creating_template.branch,
         commit=creating_template.commit,
         comment=creating_template.comment
@@ -143,6 +107,7 @@ def _from_template(template: Template):
         "repo_url": template.repo_url,
         "branch": template.branch,
         "commit": template.commit,
+        "default_rule": template.default_rule,
         "comment": template.comment
     }
 

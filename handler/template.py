@@ -63,6 +63,7 @@ class TemplateHandler:
 class CreatingTemplate(ModelFromDict):
     type = 0
     sort = 0
+    default_rule = ""
     language_code = ""
     framework_code = ""
 

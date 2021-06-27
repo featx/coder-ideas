@@ -1,12 +1,11 @@
 import os
-import shutil
 
 from git import Repo
 
 from context.exception import BusinessError
-from manage import _repo_dir, _git_repo_push, RULE_MARK, FEATX_CODER
+from manage import _repo_dir, _copy_and_replace, _replace_data, delete_dir, \
+    repo_copy, repo_commit_push, snake_camel, RULE_MARK
 from manage.domain import _from_project_domain
-from plugin.language_type import dict_type_by_lang_code
 from service.model.project_domain import ProjectDomain
 from service.project_domain import ProjectDomainService
 from service.model.project import Project, ProjectPageCriteria
@@ -30,23 +29,11 @@ class ProjectManager:
         template = self.__template_service.find_by_code(creating_project.template_code)
         if template is None:
             raise BusinessError.TEMPLATE_NOT_FOUND.with_info(creating_project.template_code)
-        template_dir = _repo_dir(self.__git_templates, template.repo_url)
-        # TODO May be require lock repo
-        template_repo = Repo.init(template_dir)
-        files = []
-        for file, ind in template_repo.index.entries:
-            if not file.endswith(RULE_MARK):
-                files.append(file)
-        template_repo.close()
-
         project = self.__project_service.create(_to_project(creating_project))
-        project_dir = os.path.join(self.__git_workspace, project.code)
-        shutil.copytree(template_dir, project_dir)
-        shutil.rmtree(project_dir + os.path.sep + ".git")
 
-        project_repo = Repo.init(project_dir)
-        project_repo.index.add(files)
-        project_repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
+        template_dir = _repo_dir(self.__git_templates, template.repo_url)
+        project_dir = os.path.join(self.__git_workspace, project.code)
+        repo_copy(template_dir, project_dir, template.default_rule)
 
         return project
 
@@ -59,6 +46,7 @@ class ProjectManager:
         return self.__project_service.update(_to_project(param))
 
     def delete(self, project_code):
+        delete_dir(os.path.join(self.__git_workspace, project_code))
         self.__project_service.delete(project_code)
 
     def get(self, project_code):
@@ -146,14 +134,7 @@ class ProjectManager:
         if project is None:
             raise BusinessError.PROJECT_NOT_FOUND.with_info(param.project_code)
         project_dir = os.path.join(self.__git_workspace, project.code)
-        repo = Repo(project_dir)
-        
-        try:
-            repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
-        except Exception:
-            pass
-
-        _git_repo_push(repo, project.repo_url, project.branch, project.api_token)
+        repo_commit_push(project_dir, project.repo_url, project.branch, project.api_token)
 
 
 def _to_project(creating_project):
@@ -185,22 +166,6 @@ def _from_project(project: Project):
     }
 
 
-def snake_camel(camel: str):
-    up_index = []
-    for i, c in enumerate(camel):
-        if c.isupper():
-            up_index.append(i)
-    ls = camel.lower()
-    list_ls = list(ls)
-    if up_index:
-        addi = 0
-        for g in up_index:
-            list_ls.insert(g + addi, '_')
-            addi += 1
-    last_ls = ''.join(list_ls)
-    return last_ls
-
-
 def _render_data(template: dict, domain: ProjectDomain):
     data = dict()
     for key, value in template.items():
@@ -216,16 +181,7 @@ def _render_data(template: dict, domain: ProjectDomain):
     return data
 
 
-def _replace_data(origin: str, data: dict):
-    result = origin
-    for k, v in data.items():
-        if not isinstance(k, str) or not isinstance(v, str):
-            continue
-        result = result.replace(k, v)
-    return result
-
-
-def _render_domain_files(rule_path, domain_path, data, domains: list):
+def _render_domain_files(rule_path: str, domain_path: str, data, domains: list):
     domain_files = []
     for domain in domains:
         data = _render_data(data, domain)
@@ -236,39 +192,3 @@ def _render_domain_files(rule_path, domain_path, data, domains: list):
         _copy_and_replace(rule_path, domain_file, data)
         domain_files.append(domain_file)
     return domain_files
-
-
-def _copy_and_replace(src: str, dst: str, data: dict):
-    dst_dir, _ = os.path.split(dst)
-    os.makedirs(dst_dir, exist_ok=True)
-    read, write = None, None
-    try:
-        read = open(src, "r", encoding="utf-8")
-        write = open(dst, "w", encoding="utf-8")
-        for line in read:
-            new_line = _replace_data(line, data)
-            if "properties" in data:
-                properties = data["properties"]
-            else:
-                properties = None
-            new_line = _replace_if_prop_exist(new_line, data["${language.code}"], properties)
-            write.write(new_line)
-        write.flush()
-    except Exception as e:
-        pass
-    finally:
-        if write is not None:
-            write.close()
-        if read is not None:
-            read.close()
-
-
-def _replace_if_prop_exist(line: str, language_code: str, properties: list):
-    if "${property.type}" not in line or properties is None:
-        return line
-    result = ""
-    type_map = dict_type_by_lang_code(language_code)
-    for prop in properties:
-        result += line.replace("${property.type}", type_map[prop.type]).replace("${property.name}", prop.name)
-        result += "\n"
-    return result

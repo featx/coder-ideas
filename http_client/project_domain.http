@@ -3,28 +3,25 @@ Content-Type: application/json
 
 {
   "code": "",
-  "project_code": "PJTpbupb9gpm4w",
-  "name": "UserContact",
+  "project_code": "PJT18ixdv4mhftc",
+  "name": "Comment",
   "properties": [{
     "name": "code",
     "type": 0
   },{
-    "name": "name",
+    "name": "target",
     "type": 0
   },{
-    "name": "contact",
+    "name": "targetCode",
     "type": 0
   },{
-    "name": "phone",
+    "name": "userCode",
     "type": 0
   },{
-    "name": "phone_verified",
-    "type": 1
-  }, {
-    "name": "user_code",
+    "name": "content",
     "type": 0
   },{
-    "name": "default",
+    "name": "type",
     "type": 1
   }]
 }

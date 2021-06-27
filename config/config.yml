@@ -1,10 +1,15 @@
 data_source:
   mysql:
-    host: 172.17.0.2
+    host: 127.0.0.1
     port: 3306
     database: coder
     username: coder
     password: coder
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 1
+    password: 123456
 version_control:
   git:
     templates: /usr/local/coder/templates

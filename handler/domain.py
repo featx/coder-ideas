@@ -22,8 +22,8 @@ class DomainHandler:
     @json_exception
     async def create(self, request: Request):
         body = await request.json()
-        project = self.__project_manager.create(ModelFromDict(body))
-        return {"id": project.id, "code": project.code}
+        domain = self.__domain_manager.create(ModelFromDict(body))
+        return {"id": domain.id, "code": domain.code}
 
     async def update(self, request):
         return web.json_response({"code": -1, "result": "not implemented"})
@@ -45,8 +45,8 @@ class DomainHandler:
             properties.append(ModelFromDict(prop))
         domain = ModelFromDict(body)
         domain.properties = properties
-        project = self.__domain_manager.create(domain)
-        return {"id": project.id, "code": project.code}
+        result = self.__domain_manager.create(domain)
+        return {"id": result.id, "code": result.code}
 
     async def update(self, request):
         return web.json_response({"code": -1, "result": "not implemented"})

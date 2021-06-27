@@ -1,10 +1,10 @@
 
 import os
 
-from git import Repo, Actor
+from git import Repo
 
 from context.exception import BusinessError
-from manage import _repo_dir, _git_repo_push, RULE_MARK, FEATX_CODER
+from manage import _repo_dir, RULE_MARK, repo_push, FEATX_CODER
 from service.model.template import Template
 from service.model.template_rule import TemplateRule
 from service.template import TemplateService
@@ -137,4 +137,4 @@ def _commit_and_push(template_dir: str, files: dict, template: Template):
     except Exception as e:
         # TODO Logger Required
         pass
-    _git_repo_push(repo, template.repo_url, template.branch, template.api_token)
+    repo_push(repo, template.repo_url, template.branch, template.api_token)
