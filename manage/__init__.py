@@ -1,3 +1,4 @@
+import codecs
 import os
 import shutil
 
@@ -8,6 +9,28 @@ from plugin.language_type import dict_type_by_lang_code
 RULE_MARK = ".rul"
 BRANCH_CODER = "coder"
 FEATX_CODER = Actor("Coder", "coder@featx.org")
+
+
+_TEXT_BOMS = (
+    codecs.BOM_UTF16_BE,
+    codecs.BOM_UTF16_LE,
+    codecs.BOM_UTF32_BE,
+    codecs.BOM_UTF32_LE,
+    codecs.BOM_UTF8,
+    )
+
+
+def is_binary_file(file_path):
+    with open(file_path, 'rb') as file:
+        initial_bytes = file.read(8192)
+        file.close()
+        for bom in _TEXT_BOMS:
+            if initial_bytes.startswith(bom):
+                continue
+            else:
+                if b'\0' in initial_bytes:
+                    return True
+    return False
 
 
 def _repo_dir(template_path: str, url: str):
@@ -54,20 +77,30 @@ def _replace_data(origin: str, data: dict):
 
 
 def _copy_and_replace(src: str, dst: str, data: dict):
+    language_code = None
+    if data.__contains__("${language.code}"):
+        language_code = data["${language.code}"]
+    if "properties" in data:
+        properties = data["properties"]
+    else:
+        properties = None
+
     dst_dir, _ = os.path.split(dst)
     os.makedirs(dst_dir, exist_ok=True)
     read, write = None, None
     try:
-        read = open(src, "r", encoding="utf-8")
-        write = open(dst, "w", encoding="utf-8")
-        for line in read:
-            new_line = _replace_data(line, data)
-            if "properties" in data:
-                properties = data["properties"]
-            else:
-                properties = None
-            new_line = _replace_if_prop_exist(new_line, data["${language.code}"], properties)
-            write.write(new_line)
+        if is_binary_file(src):
+            read = open(src, "rb")
+            write = open(dst, "wb")
+            for line in read:
+                write.write(line)
+        else:
+            read = open(src, "r", encoding="utf-8")
+            write = open(dst, "w", encoding="utf-8")
+            for line in read:
+                new_line = _replace_data(line, data)
+                new_line = _replace_if_prop_exist(new_line, language_code, properties)
+                write.write(new_line)
         write.flush()
     except Exception as e:
         pass
@@ -160,17 +193,16 @@ def repo_checkout(local_dir: str, checkout_to: str):
     return result
 
 
-def repo_copy(from_dir: str, to_dir: str, replaces):
+def repo_copy(from_dir: str, to_dir: str, replaces: dict):
     try:
         from_repo = Repo.init(from_dir)
         files = []
         for file, ind in from_repo.index.entries:
             if not file.endswith(RULE_MARK):
-                files.append(file)
+                new_file = _replace_data(file, replaces)
+                _copy_and_replace(os.path.join(from_dir, file), os.path.join(to_dir, new_file), replaces)
+                files.append(new_file)
         from_repo.close()
-
-        shutil.copytree(from_dir, to_dir)
-        shutil.rmtree(to_dir + os.path.sep + ".git")
 
         to_repo = Repo.init(to_dir)
         to_repo.index.add(files)

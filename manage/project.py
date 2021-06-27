@@ -1,3 +1,4 @@
+import json
 import os
 
 from git import Repo
@@ -33,7 +34,7 @@ class ProjectManager:
 
         template_dir = _repo_dir(self.__git_templates, template.repo_url)
         project_dir = os.path.join(self.__git_workspace, project.code)
-        repo_copy(template_dir, project_dir, template.default_rule)
+        repo_copy(template_dir, project_dir, _render_project(template.default_rule, project))
 
         return project
 
@@ -147,6 +148,7 @@ def _to_project(creating_project):
         repo_url=creating_project.repo_url,
         api_token=creating_project.api_token,
         branch=creating_project.branch,
+        variables=json.loads(creating_project.variables),
         comment=creating_project.comment
     )
 
@@ -164,6 +166,25 @@ def _from_project(project: Project):
         "branch": project.branch,
         "comment": project.comment
     }
+
+
+def _render_project(template: dict, project: Project):
+    data = dict()
+    for key, value in template.items():
+        k = key.replace("${project.name|lower}", project.name.lower())
+        k = k.replace("${project.name}", project.name)
+        v = value.replace("${project.name|lower}", project.name.lower())
+        v = v.replace("${project.name}", project.name)
+        if project.variables['packageRoot']:
+            package_root = project.variables['packageRoot']
+            k = k.replace("${project.packageRoot}", package_root)
+            k = k.replace("${project.packageRoot|path}", package_root.replace('.', os.path.sep))
+            k = k.replace("${project.packageRoot|dot}", package_root)
+            v = v.replace("${project.packageRoot}", package_root)
+            v = v.replace("${project.packageRoot|path}", package_root.replace('.', os.path.sep))
+            v = v.replace("${project.packageRoot|dot}", package_root)
+        data[k] = v
+    return data
 
 
 def _render_data(template: dict, domain: ProjectDomain):

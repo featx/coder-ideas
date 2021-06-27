@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Query
 
@@ -13,6 +13,7 @@ class Project(declarative_base(), Unified):
     repo_url = Column(String(), default="", nullable=False)
     branch = Column(String(), default="", nullable=False)
     api_token = Column(String(), default="", nullable=False)
+    variables = Column(JSON(), default={}, nullable=False)
     comment = Column(String(), default="", nullable=False)
 
 

@@ -157,6 +157,7 @@ create table if not exists `t_coder_project`
     `repo_url`      varchar(128)     not null default '' comment '当前项目自己的VCS库地址',
     `branch`        varchar(128)     not null default '' comment '所要更改推送的分支',
     `api_token`     varchar(128)     not null default '' comment '访问自己项目库地址的api_token',
+    `variables`     json             not null default '{}' comment '附属变量',
     `comment`       varchar(255)     not null default '' comment '备注，说明等',
     `deleted`       tinyint unsigned not null default 0 comment '软删除标示:0否1是',
     `created_at`    datetime         not null default current_timestamp comment '创建时间',

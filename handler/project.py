@@ -69,6 +69,7 @@ class ProjectHandler:
 class CreatingProject(ModelFromDict):
     type = 0
     sort = 0
+    variables = None
     template_code = None
 
 
