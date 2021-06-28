@@ -17,5 +17,13 @@ PUT http://{{SERVER_HOST}}:{{CODER_PORT}}/template
 Content-Type: application/json
 
 {
-    "code": "TPLp4zr5z9885s"
+    "code": "TPL18iksayna0k0"
+}
+
+###:
+PUT http://{{SERVER_HOST}}:{{CODER_PORT}}/template/repo
+Content-Type: application/json
+
+{
+  "code": "TPL18iksayna0k0"
 }

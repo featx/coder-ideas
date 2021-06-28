@@ -14,6 +14,7 @@ class TemplateHandler:
             web.post('/template', self.post),
             web.put('/template', self.put),
             web.delete('/template', self.delete),
+            web.put('/template/repo', self.pull_repo),
             # Read ones
             web.get('/template', self.get),
             web.get('/templates', self.list_all),
@@ -39,6 +40,11 @@ class TemplateHandler:
         code = request.query.get("code")
         self.__template_manager.delete(code)
         return True
+
+    @json_exception
+    async def pull_repo(self, request: Request):
+        body = await request.json()
+        return self.__template_manager.pull_repo(body)
 
     @json_exception
     async def get(self, request: Request):

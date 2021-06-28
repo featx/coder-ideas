@@ -1,5 +1,5 @@
 from context.exception import BusinessError
-from manage import _repo_dir, repo_clone_checkout, repo_checkout
+from manage import _repo_dir, repo_clone_checkout, repo_checkout, repo_pull
 from service.model.template import Template, TemplatePageCriteria
 from service.model.template_rule import TemplateRule
 from service.template import TemplateService
@@ -77,6 +77,12 @@ class TemplateManager:
         for template in templates:
             result.append(_from_template(template))
         return result
+
+    def pull_repo(self, body):
+        template = self.__template_service.find_by_code(body['template_code']
+                                                        if body.__contains__('template_code') else body['code'])
+        local_dir = _repo_dir(self.__git_templates, template.repo_url)
+        return repo_pull(local_dir)
 
 
 def _to_template(creating_template):

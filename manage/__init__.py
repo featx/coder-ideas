@@ -181,7 +181,24 @@ def repo_checkout(local_dir: str, checkout_to: str):
     return result
 
 
+def repo_pull(repo_dir: str):
+    repo = None
+    try:
+        repo = Repo(repo_dir)
+        # git config pull.rebase false
+        # repo.git.config()
+        repo.git.pull()
+        return True
+    except Exception as e:
+        return False
+    finally:
+        if repo is not None:
+            repo.close()
+
+
 def repo_copy(from_dir: str, to_dir: str, replaces: dict):
+    from_repo = None
+    to_repo = None
     try:
         from_repo = Repo.init(from_dir)
         files = []
@@ -190,15 +207,18 @@ def repo_copy(from_dir: str, to_dir: str, replaces: dict):
                 new_file = _replace_data(file, replaces)
                 _copy_and_replace(os.path.join(from_dir, file), os.path.join(to_dir, new_file), replaces)
                 files.append(new_file)
-        from_repo.close()
 
         to_repo = Repo.init(to_dir)
         to_repo.index.add(files)
         to_repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
-        to_repo.close()
         return
     except Exception as e:
         return
+    finally:
+        if from_repo is not None:
+            from_repo.close()
+        if to_repo is not None:
+            to_repo.close()
 
 
 def repo_add(repo_dir: str, files: [str]):
@@ -233,11 +253,12 @@ def repo_push(local_repo: str, remote_url: str, branch: str, api_token: str):
             repo.close()
 
 
-def repo_commit_push(local_dir: str, remote_url: str, branch: str, api_token: str):
+def repo_commit_push(local_dir: str, remote_url: str, branch: str, api_token: str, name='Coder', email='coder@feat.org'):
     repo = None
     try:
         repo = Repo(local_dir)
-        repo.index.commit("Coder Coded", author=FEATX_CODER, committer=FEATX_CODER)
+        actor = Actor(name, email)
+        repo.index.commit("Coder Coded", author=actor, committer=actor)
         _git_repo_push(repo, remote_url, branch, api_token)
     except Exception as e:
         pass

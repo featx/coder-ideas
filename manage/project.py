@@ -132,7 +132,7 @@ class ProjectManager:
         if project is None:
             raise BusinessError.PROJECT_NOT_FOUND.with_info(param.project_code)
         project_dir = os.path.join(self.__git_workspace, project.code)
-        repo_commit_push(project_dir, project.repo_url, project.branch, project.api_token)
+        repo_commit_push(project_dir, project.repo_url, project.branch, project.api_token, param.author, param.email)
 
 
 def _to_project(creating_project):

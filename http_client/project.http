@@ -23,5 +23,7 @@ POST http://{{SERVER_HOST}}:{{CODER_PORT}}/project/commit
 Content-Type: application/json
 
 {
-    "project_code": "PJT18mh43d2r0b4"
+    "project_code": "PJT18mh43d2r0b4",
+    "author": "Excepts",
+    "email": "ex7ept@featx.org"
 }
