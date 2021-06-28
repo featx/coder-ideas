@@ -3,8 +3,9 @@ Content-Type: application/json
 
 {
   "code": "",
-  "project_code": "PJT18ixdv4mhftc",
+  "project_code": "PJT18ju34cdph74",
   "name": "Comment",
+  "type": 0,
   "properties": [{
     "name": "code",
     "type": 0

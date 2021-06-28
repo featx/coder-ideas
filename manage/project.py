@@ -1,16 +1,14 @@
 import json
 import os
 
-from git import Repo
-
 from context.exception import BusinessError
-from manage import _repo_dir, _copy_and_replace, _replace_data, delete_dir, \
-    repo_copy, repo_commit_push, snake_camel, RULE_MARK
-from manage.domain import _from_project_domain
-from service.model.project_domain import ProjectDomain
-from service.project_domain import ProjectDomainService
+from manage import _repo_dir, _from_project, _from_project_domain, _render_project, _render_domain_files, \
+    delete_dir, repo_copy, repo_commit_push, repo_add
+
 from service.model.project import Project, ProjectPageCriteria
+
 from service.project import ProjectService
+from service.project_domain import ProjectDomainService
 from service.template import TemplateService
 from service.template_rule import TemplateRuleService
 
@@ -93,8 +91,7 @@ class ProjectManager:
                     domain_file = os.path.join(domain_path, _file)
                     files_to_add += _render_domain_files(rule_file, domain_file, rule.data, domains)
         if len(files_to_add) > 0:
-            repo = Repo(project_dir)
-            repo.index.add(files_to_add)
+            repo_add(project_dir, files_to_add)
 
     def __find_project_domains_rules(self, param):
         if param.code is None or param.code.strip() == "":
@@ -152,64 +149,3 @@ def _to_project(creating_project):
         comment=creating_project.comment
     )
 
-
-def _from_project(project: Project):
-    return {
-        "id": project.id,
-        "code": project.code,
-        "name": project.name,
-        "type": project.type,
-        "status": project.status,
-        "image_url": project.image_url,
-        "template_code": project.template_code,
-        "repo_url": project.repo_url,
-        "branch": project.branch,
-        "comment": project.comment
-    }
-
-
-def _render_project(template: dict, project: Project):
-    data = dict()
-    for key, value in template.items():
-        k = key.replace("${project.name|lower}", project.name.lower())
-        k = k.replace("${project.name}", project.name)
-        v = value.replace("${project.name|lower}", project.name.lower())
-        v = v.replace("${project.name}", project.name)
-        if project.variables['packageRoot']:
-            package_root = project.variables['packageRoot']
-            k = k.replace("${project.packageRoot}", package_root)
-            k = k.replace("${project.packageRoot|path}", package_root.replace('.', os.path.sep))
-            k = k.replace("${project.packageRoot|dot}", package_root)
-            v = v.replace("${project.packageRoot}", package_root)
-            v = v.replace("${project.packageRoot|path}", package_root.replace('.', os.path.sep))
-            v = v.replace("${project.packageRoot|dot}", package_root)
-        data[k] = v
-    return data
-
-
-def _render_data(template: dict, domain: ProjectDomain):
-    data = dict()
-    for key, value in template.items():
-        k = key.replace("${domain.name|camel}", domain.name)
-        k = k.replace("${domain.name|Camel}", domain.name)
-        k = k.replace("${domain.name|snake}", snake_camel(domain.name))
-        v = value.replace("${domain.name|camel}", domain.name)
-        v = v.replace("${domain.name|Camel}", domain.name)
-        v = v.replace("${domain.name|snake}", snake_camel(domain.name))
-        data[k] = v
-    if hasattr(domain, "properties"):
-        data["properties"] = domain.properties
-    return data
-
-
-def _render_domain_files(rule_path: str, domain_path: str, data, domains: list):
-    domain_files = []
-    for domain in domains:
-        data = _render_data(data, domain)
-        domain_file = _replace_data(domain_path, data)
-        if domain_file.endswith(RULE_MARK):
-            domain_file = domain_file[:-4]
-        data["properties"] = domain.properties
-        _copy_and_replace(rule_path, domain_file, data)
-        domain_files.append(domain_file)
-    return domain_files

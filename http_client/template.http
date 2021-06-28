@@ -8,6 +8,7 @@ Content-Type: application/json
     "repo_url": "https://github.com/featx/spring-cloud-alibaba",
     "branch": "master",
     "api_token": "36a9d35592720bd698927bbd0820ce8df3743287",
+    "default_rule": "{\"module-\": \"${project.name|lower}-\",\"org/featx/templet/app\": \"${project.packageRoot|path}\", \"org.featx.templet.app\": \"${project.packageRoot|dot}\"}",
     "comment": ""
 }
 

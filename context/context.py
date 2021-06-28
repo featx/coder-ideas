@@ -87,7 +87,7 @@ class CoderApplication:
         self.context.managers["template-rule"] = TemplateRuleManager(self.context.services, git_templates)
         self.context.managers["project"] = ProjectManager(self.context.services, git_templates, git_workspace)
 
-        self.context.managers["domain"] = DomainManager(self.context.services)
+        self.context.managers["domain"] = DomainManager(self.context.services, git_templates, git_workspace)
 
     def handlers(self):
         self.context.handlers.append(DataEngineHandler(self.context.managers))
