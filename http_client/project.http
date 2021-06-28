@@ -11,10 +11,17 @@ Content-Type: application/json
   "framework_code": "FRW100001",
   "repo_url": "https://github.com/sta2ry/Musca.git",
   "branch": "coder",
-  "api_token": "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",
+  "api_token": "",
   "variables": "{\"packageRoot\": \"org.featx.sta2ry.musca\"}"
 }
 ###:
 GET http://{{SERVER_HOST}}:{{CODER_PORT}}/project?code=PJTpbupb9gpm4w
 ###:
 GET http://{{SERVER_HOST}}:{{CODER_PORT}}/project/detail?code=PJTpbupb9gpm4w
+###
+POST http://{{SERVER_HOST}}:{{CODER_PORT}}/project/commit
+Content-Type: application/json
+
+{
+    "project_code": "PJT18mh43d2r0b4"
+}

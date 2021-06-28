@@ -23,8 +23,8 @@ INSERT INTO coder.t_coder_language (code, name, prop_types, comment)
 VALUES ('LAN100001', 'Java', '{"0": "String", "1": "Boolean", "2": "Byte", "3": "Short", "4": "Integer", "5": "Long", "6": "Float", "7": "Double", "8": "Char", "9": "LocalDateTime"}', '');
 INSERT INTO coder.t_coder_language (code, name, comment)
 VALUES ('LAN100002', 'Golang', '');
-INSERT INTO coder.t_coder_language (code, name, comment)
-VALUES ('LAN100003', 'Python', '');
+INSERT INTO coder.t_coder_language (code, name, prop_types, comment)
+VALUES ('LAN100003', 'Python', '{"0": "str", "1": "bool", "2": "", "3": "int", "4": "int","5": "int", "6": "float", "7": "float", "8": "int", "9": "datetime"}', '');
 INSERT INTO coder.t_coder_language (code, name, comment)
 VALUES ('LAN100004', 'JavaScript', '');
 INSERT INTO coder.t_coder_language (code, name, comment)

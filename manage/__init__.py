@@ -237,7 +237,7 @@ def repo_commit_push(local_dir: str, remote_url: str, branch: str, api_token: st
     repo = None
     try:
         repo = Repo(local_dir)
-        repo.index.commit("Init", author=FEATX_CODER, committer=FEATX_CODER)
+        repo.index.commit("Coder Coded", author=FEATX_CODER, committer=FEATX_CODER)
         _git_repo_push(repo, remote_url, branch, api_token)
     except Exception as e:
         pass
