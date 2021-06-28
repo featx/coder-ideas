@@ -9,6 +9,7 @@ create table if not exists `t_coder_language`
     `code`       varchar(16)      not null default '' comment '编程语言编码',
     `name`       varchar(64)      not null default '' comment '编程语言名称',
     `sort`       int unsigned     not null default 0 comment '排序位 默认为0',
+    `prop_types` json             not null default '{}' comment '基本类型名称列表',
     `comment`    varchar(1024)    not null default '' comment '备注，说明等',
     `deleted`    tinyint unsigned not null default 0 comment '软删除标示:0否1是',
     `created_at` datetime         not null default current_timestamp comment '创建时间',
@@ -18,8 +19,8 @@ create table if not exists `t_coder_language`
 create unique index `unq_language_code` on `t_coder_language` (`code`);
 
 
-INSERT INTO coder.t_coder_language (code, name, comment)
-VALUES ('LAN100001', 'Java', '');
+INSERT INTO coder.t_coder_language (code, name, prop_types, comment)
+VALUES ('LAN100001', 'Java', '{"0": "String", "1": "Boolean", "2": "Byte", "3": "Short", "4": "Integer", "5": "Long", "6": "Float", "7": "Double", "8": "Char", "9": "LocalDateTime"}', '');
 INSERT INTO coder.t_coder_language (code, name, comment)
 VALUES ('LAN100002', 'Golang', '');
 INSERT INTO coder.t_coder_language (code, name, comment)
@@ -38,6 +39,8 @@ INSERT INTO coder.t_coder_language (code, name, comment)
 VALUES ('LAN100009', 'PHP', '');
 INSERT INTO coder.t_coder_language (code, name, comment)
 VALUES ('LAN100010', 'Ruby', '');
+INSERT INTO coder.t_coder_language (code, name, prop_types, comment)
+VALUES ('LAN100011', 'MySQL', '{"0": "varchar", "1": "tinyint", "2": "byte", "3": "smallint", "4": "int", "5": "bigint", "6": "float", "7": "double", "8": "char", "9": "datetime"}', '');
 
 create table if not exists `t_coder_framework`
 (
