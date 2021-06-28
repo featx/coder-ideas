@@ -34,9 +34,11 @@ class DomainManager:
             prop.project_code = creating_domain.project_code
             domain_properties.append(_to_domain_property(prop))
         self.__domain_property_service.create(domain_properties)
+
         domain.properties = domain_properties
         domain.project = project
         self.__domain_add_to_project(domain, project.template_code)
+
         return domain
 
     def __domain_add_to_project(self, domain: ProjectDomain, template_code: str):

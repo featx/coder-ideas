@@ -3,11 +3,11 @@ Content-Type: application/json
 
 {
 	"code": "",
-	"type": 0,
+	"type": 1,
     "engine": 0,
-    "name": "Core-Controller-Test",
+    "name": "Data-MySQL-Test",
     "template_code": "TPL18iksayna0k0",
-    "path": "module-core/src/test/java/org/featx/templet/app/controller",
+    "path": "module-data/src/test/resources/db/migration",
     "data": {
         "org/featx/templet/app": "${project.packageRoot|path}",
         "org.featx.templet.app": "${project.packageRoot|dot}",
@@ -16,7 +16,7 @@ Content-Type: application/json
         "domain_feature_module": "${domain.name|snake}",
         "domain-feature-module": "${domain.name|dash}"
         },
-    "comment": "Core Controller Test"
+    "comment": "Data MySQL Test"
 }
 
 ###:

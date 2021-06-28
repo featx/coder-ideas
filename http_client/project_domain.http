@@ -4,7 +4,7 @@ Content-Type: application/json
 {
   "code": "",
   "project_code": "PJT18ju34cdph74",
-  "name": "Comment",
+  "name": "Comment Mall Product",
   "type": 0,
   "properties": [{
     "name": "code",
