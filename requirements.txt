@@ -1,6 +1,6 @@
 aiohttp==3.7.4
 cchardet==2.1.7
-cryptography==3.4.7
+cryptography==39.0.1
 PyMySQL==1.0.2
 PyYAML==5.4.1
 SQLAlchemy==1.4.19
